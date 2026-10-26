@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home (Phase 4) -->
+    <string name="home_no_time">--:--</string>
+    <string name="home_edited">edited</string>
+    <string name="home_edited_short">✎</string>
+    <string name="home_at_work_for">At work for %1$s</string>
+    <string name="home_left_at">Left %1$s</string>
+    <string name="home_left_at_worked">Left %1$s · worked %2$s</string>
+    <string name="home_log_now">Log arrival now</string>
+    <string name="home_week_of">Week of %1$s</string>
+    <string name="home_open_exit">—</string>
+    <string name="home_needs_attention">Needs a time or status</string>
+    <string name="home_show_older">Show older weeks</string>
+    <plurals name="home_attention">
+        <item quantity="one">%1$d past working day has no arrival or status. Tap it below to fix it.</item>
+        <item quantity="other">%1$d past working days have no arrival or status. Tap them below to fix them.</item>
+    </plurals>
+
+    <string name="badge_on_time">On time</string>
+    <plurals name="badge_late">
+        <item quantity="one">Late by %1$d min</item>
+        <item quantity="other">Late by %1$d min</item>
+    </plurals>
+    <string name="badge_not_yet">Not yet</string>
+    <string name="badge_missing">Not detected</string>
+    <string name="badge_extra_day">Extra day</string>
+
+    <string name="duration_h_min">%1$d h %2$02d min</string>
+    <string name="duration_min">%1$d min</string>
+
+    <!-- Edit sheet -->
+    <string name="edit_arrival">Arrival</string>
+    <string name="edit_exit">Exit</string>
+    <string name="edit_set_time">Set time</string>
+    <string name="edit_clear">Clear</string>
+    <string name="edit_pick_arrival">Arrival time</string>
+    <string name="edit_pick_exit">Exit time</string>
+    <string name="edit_status">Status</string>
+    <string name="edit_status_prompt">Not working today? Pick one</string>
+    <string name="edit_note">Note</string>
+    <string name="edit_audit_edited">Detected %1$s by %2$s, edited by you</string>
+    <string name="edit_audit_source">Detected by %1$s</string>
+    <string name="edit_error_exit_without_arrival">Set an arrival time before an exit time.</string>
+    <string name="edit_error_exit_before_arrival">The exit must be after the arrival.</string>
+    <string name="edit_error_future">That time hasn\'t happened yet.</string>
+    <string name="edit_error_status">This status comes from your schedule and can\'t be set for one day.</string>
+
+    <!-- Notifications -->
+    <string name="channel_arrival">Arrival logged</string>
+    <string name="channel_arrival_desc">Confirms each automatically logged arrival, with Edit and Undo.</string>
+    <string name="channel_missed">No arrival detected</string>
+    <string name="channel_missed_desc">Asks you to log the day when no arrival was detected in the entry window.</string>
+    <string name="notif_arrival_title">Arrived %1$s — logged</string>
+    <string name="notif_arrival_moved_title">Arrived %1$s — corrected to the earlier time</string>
+    <string name="notif_source_geofence">Detected by geofence</string>
+    <string name="notif_source_wifi">Detected by office Wi-Fi</string>
+    <string name="notif_source_manual">Logged by hand</string>
+    <string name="notif_arrival_estimated">%1$s · time estimated (you were already inside when detection started)</string>
+    <string name="notif_action_edit_time">Edit time</string>
+    <string name="notif_action_undo">Undo</string>
+    <string name="notif_missed_title">No arrival detected today</string>
+    <string name="notif_missed_title_repeat">Still no arrival logged today</string>
+    <string name="notif_missed_window">Nothing was detected between %1$s and %2$s.</string>
+    <string name="notif_missed_suggestion">%1$s You were seen at the office at %2$s; Pick time offers it.</string>
+    <string name="notif_action_log_now">Log now</string>
+    <string name="notif_action_pick_time">Pick time</string>
+    <string name="notif_action_day_off">Day off / WFH / Leave</string>
+
+    <!-- Settings -->
+    <string name="simulator_title">Simulator (dev)</string>
+    <string name="simulator_sub">Send test signals through the real engine and database</string>
+</resources>

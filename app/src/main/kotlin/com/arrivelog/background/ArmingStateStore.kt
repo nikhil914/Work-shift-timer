@@ -31,6 +31,10 @@ data class ArmingState(
     val lastError: String? = null,
     val lastErrorAt: Instant? = null,
     val missedEntryCheckDate: LocalDate? = null,
+    /** "No arrival detected" was posted on this date ... */
+    val missedNotifiedDate: LocalDate? = null,
+    /** ... and repeated once (spec: re-notify once after 60 min). */
+    val missedRenotifyDate: LocalDate? = null,
     val nextWakeAt: Instant? = null,
     val nextWakeReason: String? = null,
     val housekeepingDate: LocalDate? = null,
@@ -69,11 +73,15 @@ class ArmingStateStore @Inject constructor(@ApplicationContext private val conte
         lastRegisteredAt = this[REGISTERED_AT]?.let(Instant::ofEpochMilli),
         lastError = this[ERROR],
         lastErrorAt = this[ERROR_AT]?.let(Instant::ofEpochMilli),
-        missedEntryCheckDate = this[MISSED_DATE]?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+        missedEntryCheckDate = this[MISSED_DATE].toDate(),
+        missedNotifiedDate = this[MISSED_NOTIFIED].toDate(),
+        missedRenotifyDate = this[MISSED_RENOTIFIED].toDate(),
         nextWakeAt = this[NEXT_WAKE]?.let(Instant::ofEpochMilli),
         nextWakeReason = this[NEXT_REASON],
-        housekeepingDate = this[HOUSEKEEPING]?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+        housekeepingDate = this[HOUSEKEEPING].toDate(),
     )
+
+    private fun String?.toDate(): LocalDate? = this?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
 
     private fun androidx.datastore.preferences.core.MutablePreferences.write(s: ArmingState) {
         this[SIG] = s.geofenceSignature
@@ -83,6 +91,8 @@ class ArmingStateStore @Inject constructor(@ApplicationContext private val conte
         put(ERROR, s.lastError)
         put(ERROR_AT, s.lastErrorAt?.toEpochMilli())
         put(MISSED_DATE, s.missedEntryCheckDate?.toString())
+        put(MISSED_NOTIFIED, s.missedNotifiedDate?.toString())
+        put(MISSED_RENOTIFIED, s.missedRenotifyDate?.toString())
         put(NEXT_WAKE, s.nextWakeAt?.toEpochMilli())
         put(NEXT_REASON, s.nextWakeReason)
         put(HOUSEKEEPING, s.housekeepingDate?.toString())
@@ -100,6 +110,8 @@ class ArmingStateStore @Inject constructor(@ApplicationContext private val conte
         val ERROR = stringPreferencesKey("last_error")
         val ERROR_AT = longPreferencesKey("last_error_at")
         val MISSED_DATE = stringPreferencesKey("missed_entry_check_date")
+        val MISSED_NOTIFIED = stringPreferencesKey("missed_entry_notified_date")
+        val MISSED_RENOTIFIED = stringPreferencesKey("missed_entry_renotified_date")
         val NEXT_WAKE = longPreferencesKey("next_wake_at")
         val NEXT_REASON = stringPreferencesKey("next_wake_reason")
         val HOUSEKEEPING = stringPreferencesKey("housekeeping_date")

@@ -1,5 +1,6 @@
 package com.arrivelog
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -16,6 +18,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -29,6 +32,7 @@ import com.arrivelog.ui.nav.PermissionsRoute
 import com.arrivelog.ui.nav.ProfileEditRoute
 import com.arrivelog.ui.nav.ScheduleRoute
 import com.arrivelog.ui.nav.SettingsRoute
+import com.arrivelog.ui.nav.SimulatorRoute
 import com.arrivelog.ui.nav.SetupStep
 import com.arrivelog.ui.nav.TestNowRoute
 import com.arrivelog.ui.nav.WifiRoute
@@ -45,6 +49,8 @@ import com.arrivelog.ui.setup.test.TestNowScreen
 import com.arrivelog.ui.setup.wifi.WifiSetupScreen
 import com.arrivelog.ui.setup.workplaces.WorkplaceEditScreen
 import com.arrivelog.ui.setup.workplaces.WorkplacesScreen
+import com.arrivelog.ui.home.EditRequest
+import com.arrivelog.ui.home.HomeScreen
 import com.arrivelog.ui.shell.ShellScreen
 import com.arrivelog.ui.theme.ArriveLogTheme
 import com.arrivelog.background.DetectionCoordinator
@@ -53,6 +59,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -60,13 +67,16 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/** Single activity. First launch goes through the setup wizard; afterwards Home (Phase 1 shell for now). */
+/** Single activity. First launch goes through the setup wizard; afterwards Home. */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject lateinit var coordinator: DetectionCoordinator
 
     @Inject @ApplicationScope
     lateinit var appScope: CoroutineScope
+
+    /** Edit-sheet requests from notification taps; Home consumes them. */
+    private val editRequests = MutableStateFlow<EditRequest?>(null)
 
     /** Opening the app re-checks registrations and settles exits (cheap; no re-registration if unchanged). */
     override fun onResume() {
@@ -76,14 +86,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Only a fresh launch carries the request; after rotation it was already handled.
+        if (savedInstanceState == null) editRequests.value = EditRequest.from(intent)
         enableEdgeToEdge()
         setContent {
             ArriveLogTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    AppNavHost()
+                    AppNavHost(editRequests = editRequests, onEditRequestHandled = { editRequests.value = null })
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        EditRequest.from(intent)?.let { editRequests.value = it }
     }
 }
 
@@ -95,7 +112,11 @@ class MainViewModel @Inject constructor(settings: SettingsRepository) : ViewMode
 }
 
 @Composable
-private fun AppNavHost(main: MainViewModel = hiltViewModel()) {
+private fun AppNavHost(
+    editRequests: StateFlow<EditRequest?>,
+    onEditRequestHandled: () -> Unit,
+    main: MainViewModel = hiltViewModel(),
+) {
     val setupCompleted by main.setupCompleted.collectAsStateWithLifecycle()
     val done = setupCompleted ?: run {
         Box(Modifier.fillMaxSize())
@@ -104,12 +125,28 @@ private fun AppNavHost(main: MainViewModel = hiltViewModel()) {
     val nav = rememberNavController()
     val start: Any = if (done) HomeRoute else WorkplacesRoute(wizard = true)
 
+    // A notification tapped while another screen is open: go back to Home, which opens the sheet.
+    val pending by editRequests.collectAsStateWithLifecycle()
+    LaunchedEffect(pending) {
+        if (pending != null && done && nav.currentDestination?.hasRoute<HomeRoute>() == false) {
+            nav.popBackStack<HomeRoute>(inclusive = false)
+        }
+    }
+
     NavHost(navController = nav, startDestination = start) {
-        composable<HomeRoute> { ShellScreen(onSettings = { nav.navigate(SettingsRoute) }) }
+        composable<HomeRoute> {
+            HomeScreen(
+                onSettings = { nav.navigate(SettingsRoute) },
+                editRequests = editRequests,
+                onEditRequestHandled = onEditRequestHandled,
+            )
+        }
+        composable<SimulatorRoute> { ShellScreen(onBack = { nav.popBackStack() }) }
         composable<SettingsRoute> {
             SettingsScreen(
                 onOpen = { nav.navigate(it.route(wizard = false)) },
                 onDebug = { nav.navigate(DebugLogRoute) },
+                onSimulator = { nav.navigate(SimulatorRoute) },
                 onBack = { nav.popBackStack() },
             )
         }

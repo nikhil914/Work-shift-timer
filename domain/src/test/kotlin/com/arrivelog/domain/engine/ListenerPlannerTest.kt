@@ -35,6 +35,18 @@ class ListenerPlannerTest {
         assertThat(plan.wifiCallback).isTrue()
         assertThat(plan.responsivenessMs).isEqualTo(180_000)
         assertThat(plan.nextChangeAt).isEqualTo(MON.at(11, 10))
+        assertThat(plan.initialTrigger).isTrue()
+    }
+
+    @Test
+    fun `after Undo the fences are re-armed without the initial trigger`() {
+        h.states[MON] = com.arrivelog.domain.model.DetectionState(MON, ignoreEvidenceBefore = MON.at(8, 30))
+        val plan = h.plan(MON, MON.at(8, 31))
+        assertThat(plan.geofence).isEqualTo(GeofenceArming.ARRIVAL)
+        assertThat(plan.initialTrigger).isFalse()
+        assertThat(GeofenceSignature.of(plan, h.workplaces, 120_000)).isNotEqualTo(
+            GeofenceSignature.of(plan.copy(initialTrigger = true), h.workplaces, 120_000),
+        )
     }
 
     @Test

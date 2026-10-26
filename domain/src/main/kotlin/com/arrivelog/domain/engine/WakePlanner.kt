@@ -14,13 +14,14 @@ import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 
-enum class WakeReason { ARM, MISSED_ENTRY_CHECK, DISARM, NEXT_WORKING_DAY }
+enum class WakeReason { ARM, MISSED_ENTRY_CHECK, MISSED_ENTRY_RENOTIFY, DISARM, NEXT_WORKING_DAY }
 
 data class Wake(val at: Instant, val reason: WakeReason)
 
 /**
  * The single next moment the app must wake up by itself. At most three per working day (arm,
  * missed-entry check, disarm); none on days that are off. Everything else is event-driven.
+ * A missed day adds one: the re-notify an hour after the missed-entry notification.
  */
 class WakePlanner @Inject constructor(
     private val clock: Clock,
@@ -34,10 +35,12 @@ class WakePlanner @Inject constructor(
         todayRecord: WorkDay?,
         missedEntryCheckDone: Boolean,
         now: Instant = clock.instant(),
+        /** The missed-entry notification was posted today and has not been repeated yet. */
+        renotifyPending: Boolean = false,
     ): Wake? {
         if (workplaces.isEmpty()) return null
         timeline(today, schedule)?.let { t ->
-            todayCandidates(t, settings, todayRecord, missedEntryCheckDone).filter { it.at.isAfter(now) }.minByOrNull { it.at }?.let { return it }
+            todayCandidates(t, settings, todayRecord, missedEntryCheckDone, renotifyPending).filter { it.at.isAfter(now) }.minByOrNull { it.at }?.let { return it }
         }
         // Next working day's arm time (holidays and OFF days skipped). Two weeks covers any leave
         // block entered so far; the daily watchdog re-plans anyway.
@@ -48,11 +51,18 @@ class WakePlanner @Inject constructor(
         return null
     }
 
-    private fun todayCandidates(t: DayTimeline, settings: DetectionSettings, day: WorkDay?, missedDone: Boolean): List<Wake> = buildList {
+    private fun todayCandidates(
+        t: DayTimeline,
+        settings: DetectionSettings,
+        day: WorkDay?,
+        missedDone: Boolean,
+        renotifyPending: Boolean,
+    ): List<Wake> = buildList {
         val markedOff = day != null && day.arrivalAt == null && day.status != DayStatus.WORKING
         if (markedOff) return@buildList
         add(Wake(t.armAt, WakeReason.ARM))
         if (day?.arrivalAt == null && !missedDone) add(Wake(t.missedEntryCheckAt, WakeReason.MISSED_ENTRY_CHECK))
+        if (day?.arrivalAt == null && missedDone && renotifyPending) add(Wake(t.missedEntryRenotifyAt, WakeReason.MISSED_ENTRY_RENOTIFY))
         if (day?.arrivalAt != null && settings.exitTrackingEnabled) add(Wake(t.disarmAt, WakeReason.DISARM))
     }
 
@@ -75,6 +85,7 @@ object GeofenceSignature {
         } else {
             buildString {
                 append(plan.geofence.name).append('|').append(plan.responsivenessMs).append('|').append(loiteringMs)
+                if (plan.initialTrigger) append("|IT")
                 workplaces.sortedBy { it.id }.forEach { w ->
                     append('|').append(w.id).append(':').append(w.latitude).append(',').append(w.longitude).append(',').append(w.radiusMeters)
                 }

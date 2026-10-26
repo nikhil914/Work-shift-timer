@@ -21,8 +21,8 @@
     <string name="mode_wifi">Wi-Fi only</string>
     <string name="mode_geofence">Geofence only</string>
 
-    <!-- Phase 1 dev shell (replaced by Home in Phase 4) -->
-    <string name="shell_title">ArriveLog (dev)</string>
+    <!-- Phase 1 dev shell, now Settings → Simulator -->
+    <string name="shell_title">Simulator (dev)</string>
     <string name="shell_today_title">Today, %1$s</string>
     <string name="shell_day_working">%1$s · entry window %2$s–%3$s · expected %4$s</string>
     <string name="shell_day_off">Not a working day (%1$s). No detection.</string>
