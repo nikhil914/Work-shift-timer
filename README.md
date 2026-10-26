@@ -1,7 +1,7 @@
 # ArriveLog
 
 Automatic workplace arrival logging (geofence + Wi-Fi), restricted to the working schedule.
-Built in phases; this is **Phase 1: project setup, data layer, decision engine + tests**.
+Built in phases. Done: **Phase 1** (data layer, decision engine, tests) and **Phase 2** (setup wizard, permissions).
 Distribution: **Google Play**.
 
 ## Decisions (26 Oct 2026)
@@ -65,6 +65,29 @@ Battery cost of Phase 1: zero. Nothing runs in the background; no permissions ar
 9. **"Fully offline"**: the background is offline. The setup map needs network for tiles and search while it is on screen, so `INTERNET` is declared. Phase 2 will use the platform `Geocoder` for search (no Places API billing) unless you prefer Places.
 
 Additions to the spec's data model (for debugging and correctness): `RawEvent.receivedAt` (shows delivery delay) and `bssid`, a `SYSTEM` event type (arm/disarm/checks, counted as wake-ups), `WorkDay.zoneId`, separate `arrivalEdited`/`exitEdited` (`editedManually` is derived), `originalExitAt`, `arrivalWorkplaceId`, and the `detection_state` table (per-day engine memory that must survive process death).
+
+## Phase 2: setup wizard
+
+First launch runs six steps; each can be reopened later from **Settings** (top-right on the home screen):
+
+1. **Workplaces** (up to 3): Google map with address search (platform `Geocoder`, no Places billing), *Use my current location*, draggable pin or tap-to-place, 150–500 m radius with circle preview. Without a Maps key the editor falls back to current-location / typed coordinates.
+2. **Office Wi-Fi** per workplace: connected network + cached scan results (a fresh scan only on tap), manual entry, *also match BSSID* (BSSIDs captured when you tick a network), *count as present when in range*.
+3. **Detection**: the four modes, exit logging, exit reminder, faster detection.
+4. **Schedule**: Mon–Sun → profile A / B / custom / Off, profile editor with validation, holidays and leave (date ranges).
+5. **Permissions**: one card per permission, explanation shown before each system prompt (doubles as Google Play's prominent disclosure for background location), *Open settings* after a refusal, battery-optimisation list plus Samsung *Unrestricted* / *Never sleeping apps* steps.
+6. **Test now**: readiness checklist, one location fix with distance to each fence, connected Wi-Fi and whether it matches, and whether an arrival *would* be logged in the current mode.
+
+Precise location is requested the first time it is needed (map or Wi-Fi step), with the same explanation, rather than only at step 5: Android won't show Wi-Fi names without it.
+Nothing runs in the background yet; that is Phase 3.
+
+### Google Maps API key
+
+Create an *Android* key for *Maps SDK for Android* in Google Cloud Console and restrict it to package `com.arrivelog` with these SHA-1 fingerprints:
+
+- release (CI): `B3:CD:C8:1C:E7:9A:6E:1F:CE:2F:D1:DA:F7:A2:AB:53:B9:9B:85:51`
+- debug: `./gradlew signingReport` on your PC
+
+Add it as `MAPS_API_KEY` in `local.properties` and as the `MAPS_API_KEY` repository secret.
 
 ## Releases and signing
 

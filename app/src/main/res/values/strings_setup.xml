@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common actions -->
+    <string name="action_add">Add</string>
+    <string name="action_allow">Allow</string>
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_done">Done</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_next">Next</string>
+    <string name="action_ok">OK</string>
+    <string name="action_open_settings">Open settings</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_save">Save</string>
+    <string name="action_search">Search</string>
+    <string name="action_skip">Skip</string>
+    <string name="setup_step_of">Step %1$d of %2$d</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_workplaces_sub">Office locations and geofence radius</string>
+    <string name="settings_wifi_sub">Office Wi-Fi networks</string>
+    <string name="settings_mode_sub">How arrival is detected, exit tracking</string>
+    <string name="settings_schedule_sub">Working days, entry windows, holidays and leave</string>
+    <string name="settings_perm_sub">Location, notifications, battery</string>
+    <string name="settings_test_sub">Live check of location and Wi-Fi</string>
+
+    <!-- Workplaces -->
+    <string name="workplaces_title">Workplaces</string>
+    <string name="workplaces_intro">Add the places where your arrival should be logged. Up to three, for example your main office and a second site.</string>
+    <string name="workplaces_row_detail">%1$d m radius · %2$s, %3$s</string>
+    <string name="workplaces_row_no_wifi">No office Wi-Fi yet</string>
+    <plurals name="workplaces_row_wifi">
+        <item quantity="one">Wi-Fi: %1$s</item>
+        <item quantity="other">Wi-Fi: %1$s</item>
+    </plurals>
+    <string name="workplaces_add_first">Add workplace</string>
+    <string name="workplaces_add">Add another workplace</string>
+    <string name="workplaces_max">You can save up to %1$d workplaces.</string>
+    <string name="workplaces_delete_title">Delete %1$s?</string>
+    <string name="workplaces_delete_body">Its location and Wi-Fi networks are removed. Days already logged are kept.</string>
+
+    <!-- Workplace editor -->
+    <string name="editor_title_new">New workplace</string>
+    <string name="editor_title_edit">Edit workplace</string>
+    <string name="editor_search">Search address or place</string>
+    <string name="editor_search_none">No places found. Try a different search or drop the pin on the map.</string>
+    <string name="editor_search_unavailable">Search isn’t available right now (no connection or no geocoder on this phone). Drop the pin on the map instead.</string>
+    <string name="editor_name">Name</string>
+    <string name="editor_name_hint">e.g. Main office</string>
+    <string name="editor_radius">Radius: %1$d m</string>
+    <string name="editor_radius_hint">200 m suits most offices. Smaller than 150 m causes false arrivals and exits.</string>
+    <string name="editor_use_current">Use my current location</string>
+    <string name="editor_pick_hint">Tap the map or drag the pin onto your office entrance.</string>
+    <string name="editor_location_unavailable">Couldn’t get your location. Check that Location is on and try again outdoors or near a window.</string>
+    <string name="editor_precise_needed">Precise location is needed to place the pin. You can still search or tap the map.</string>
+    <string name="editor_no_maps_title">Map not available in this build</string>
+    <string name="editor_no_maps_body">No Google Maps API key was configured. Use “Use my current location” at the office, or enter coordinates.</string>
+    <string name="editor_latitude">Latitude</string>
+    <string name="editor_longitude">Longitude</string>
+
+    <!-- Wi-Fi -->
+    <string name="wifi_title">Office Wi-Fi</string>
+    <string name="wifi_intro">Pick the Wi-Fi networks at your office. Connecting to one is usually the fastest and most battery-friendly arrival signal.</string>
+    <string name="wifi_permission_title">Location permission needed to see Wi-Fi names</string>
+    <string name="wifi_permission_body">Android only reveals Wi-Fi network names to apps with precise location permission. ArriveLog uses them only to recognise your office.</string>
+    <string name="wifi_no_workplace">Add a workplace first.</string>
+    <string name="wifi_for_workplace">Networks for %1$s</string>
+    <string name="wifi_rescan">Scan</string>
+    <string name="wifi_none_visible">No networks visible. At the office, connect to the office Wi-Fi or tap Scan. You can also type the name below.</string>
+    <string name="wifi_connected">connected</string>
+    <string name="wifi_signal">%1$d dBm</string>
+    <plurals name="wifi_access_points">
+        <item quantity="one">%1$d access point</item>
+        <item quantity="other">%1$d access points</item>
+    </plurals>
+    <string name="wifi_manual">Add network name manually</string>
+    <string name="wifi_match_bssid">Also match access point (BSSID)</string>
+    <string name="wifi_match_bssid_body">Stricter: only the access points seen when you ticked the network count. Re-tick at the office if the access points change.</string>
+    <string name="wifi_in_range">Count as present when in range</string>
+    <string name="wifi_in_range_body">Arrival can also be detected when the network is visible but not connected. Only checked when the phone is already awake, so it costs no extra battery.</string>
+    <string name="wifi_scan_note">Android limits how often apps may scan. If the list is empty, wait a moment and tap Scan again.</string>
+
+    <!-- Detection mode -->
+    <string name="mode_title">Detection</string>
+    <string name="mode_or_body">Recommended. Either signal logs the arrival, whichever comes first.</string>
+    <string name="mode_and_body">Stricter. You must be inside the geofence and on office Wi-Fi.</string>
+    <string name="mode_wifi_body">Office Wi-Fi only. The geofence is still used to detect when you leave.</string>
+    <string name="mode_geofence_body">Location only. Use when the office has no usable Wi-Fi.</string>
+    <string name="mode_exit">Log when I leave</string>
+    <string name="mode_exit_body">Records the time you leave, ignoring short trips under 10 minutes.</string>
+    <string name="mode_exit_reminder">Remind me to add the exit time</string>
+    <string name="mode_exit_reminder_body">Two hours after expected end, if no exit was detected.</string>
+    <string name="mode_faster">Faster detection</string>
+    <string name="mode_faster_body">Uses more battery. The logged time is equally accurate either way; this only makes the notification come sooner.</string>
+
+    <!-- Schedule -->
+    <string name="schedule_title">Schedule</string>
+    <string name="schedule_intro">Detection only runs during each day’s entry window. Days set to Off get no detection and no notifications.</string>
+    <string name="schedule_week">Week</string>
+    <string name="schedule_off">Off</string>
+    <string name="schedule_need_one_day">Set at least one working day.</string>
+    <string name="schedule_profiles">Profiles</string>
+    <string name="schedule_profile_line">Entry window %1$s–%2$s · expected %3$s–%4$s</string>
+    <string name="schedule_add_profile">Add custom profile</string>
+    <string name="schedule_days_off">Holidays and leave</string>
+    <string name="schedule_days_off_empty">None. Add public holidays or leave so no arrival is expected on those days.</string>
+    <string name="schedule_add_days_off">Add holiday or leave</string>
+    <string name="schedule_delete_title">Delete %1$s?</string>
+    <string name="schedule_delete_body">Days that use this profile will be set to Off.</string>
+
+    <!-- Profile editor -->
+    <string name="profile_title_new">New profile</string>
+    <string name="profile_title_edit">Edit profile</string>
+    <string name="profile_name">Name</string>
+    <string name="profile_window">Entry window</string>
+    <string name="profile_from">From</string>
+    <string name="profile_to">To</string>
+    <string name="profile_window_hint">Arrivals are only detected in this window (and up to 15 minutes before it).</string>
+    <string name="profile_expected">Expected hours</string>
+    <string name="profile_start">Start</string>
+    <string name="profile_end">End</string>
+    <string name="profile_expected_hint">Used for “On time / Late” and to know when to stop watching for your exit.</string>
+    <string name="profile_pick_time">Pick time</string>
+    <string name="profile_err_name">Give the profile a name.</string>
+    <string name="profile_err_window">The entry window must end after it starts (same day).</string>
+    <string name="profile_err_expected">Expected end must be after expected start.</string>
+    <string name="profile_warn_outside">Expected start is outside the entry window, so an on-time arrival wouldn’t be detected.</string>
+
+    <!-- Permissions -->
+    <string name="perm_title">Permissions</string>
+    <string name="perm_intro">ArriveLog works offline. Location and Wi-Fi names never leave this phone.</string>
+    <string name="perm_fine_title">Precise location</string>
+    <string name="perm_fine_body">Needed to place your office on the map, to read Wi-Fi network names, and for geofencing.</string>
+    <string name="perm_bg_title">Location: Allow all the time</string>
+    <string name="perm_bg_body">ArriveLog collects location data to detect when you arrive at and leave your workplace, even when the app is closed or not in use. This is only active during your entry window on working days. Location data stays on this phone and is never shared or uploaded.</string>
+    <string name="perm_bg_how">On the next screen choose “Allow all the time”.</string>
+    <string name="perm_bg_allow">Continue</string>
+    <string name="perm_location_on_title">Location services on</string>
+    <string name="perm_location_on_body">Turn on Location. For reliable geofencing also keep Google Location Accuracy on (Settings → Location → Location services).</string>
+    <string name="perm_notif_title">Notifications</string>
+    <string name="perm_notif_body">To confirm arrivals (“Arrived 08:07 — logged”) and to remind you if no arrival was detected.</string>
+    <string name="perm_nearby_title">Nearby Wi-Fi devices</string>
+    <string name="perm_nearby_body">Lets ArriveLog see nearby Wi-Fi networks, used to recognise your office network.</string>
+    <string name="perm_battery_title">Battery: Unrestricted</string>
+    <string name="perm_battery_body" formatted="false">Samsung delays or blocks background events for restricted apps, which can make arrivals late or missed. ArriveLog is designed to use under 1% battery a day even when unrestricted.</string>
+    <string name="perm_battery_samsung">On Samsung: Settings → Apps → ArriveLog → Battery → Unrestricted. Then Settings → Device care (Battery and device care) → Battery → Background usage limits: make sure ArriveLog is not in “Sleeping apps” or “Deep sleeping apps”, and add it to “Never sleeping apps”.</string>
+    <string name="perm_battery_generic">In the list, select All apps → ArriveLog → Don’t optimise. Or open the app’s battery settings and choose Unrestricted.</string>
+    <string name="perm_battery_open_list">Open battery list</string>
+    <string name="perm_battery_open_app">App battery settings</string>
+    <string name="perm_continue_anyway">Continue anyway</string>
+    <string name="perm_granted">Done</string>
+    <string name="perm_refused_hint">If Android no longer shows the prompt, enable it in settings.</string>
+    <string name="perm_needs_previous">Allow precise location first.</string>
+    <string name="perm_required_missing">Arrival detection can’t work until location is allowed all the time and Location is on. You can finish setup and come back from Settings.</string>
+
+    <!-- Test now -->
+    <string name="test_title">Test now</string>
+    <string name="test_finish">Finish setup</string>
+    <string name="test_refresh">Refresh</string>
+    <string name="test_ready">Ready for automatic detection</string>
+    <string name="test_not_ready">Not ready yet</string>
+    <string name="test_location">Location</string>
+    <string name="test_location_no_permission">Location permission not granted.</string>
+    <string name="test_location_none">No location fix yet.</string>
+    <string name="test_accuracy">Accuracy ±%1$d m</string>
+    <string name="test_inside">Inside %1$s (%2$d m from centre, radius %3$d m)</string>
+    <string name="test_outside">Outside %1$s (%2$d m away, radius %3$d m)</string>
+    <string name="test_locate_again">Locate again</string>
+    <string name="test_wifi">Wi-Fi</string>
+    <string name="test_wifi_none">Not connected to Wi-Fi.</string>
+    <string name="test_wifi_hidden">Connected, but the network name is hidden (location permission or Location off).</string>
+    <string name="test_wifi_connected">Connected to “%1$s”</string>
+    <string name="test_wifi_match">This is office Wi-Fi.</string>
+    <string name="test_wifi_not_office">Not an office network.</string>
+    <string name="test_wifi_bssid">Office network name, but a different access point (strict matching is on).</string>
+    <string name="test_verdict_title">Mode: %1$s</string>
+    <string name="test_verdict_yes">If the entry window were open now, your arrival would be logged.</string>
+    <string name="test_verdict_no">If the entry window were open now, no arrival would be logged.</string>
+    <string name="test_today_window">Today: %1$s, entry window %2$s–%3$s.</string>
+    <string name="test_today_off">Today is not a working day.</string>
+    <string name="test_phase_note">Background detection is switched on in the next app update (Phase 3). This screen checks the setup only.</string>
+
+    <!-- Readiness issues -->
+    <string name="issue_no_workplace">No workplace saved.</string>
+    <string name="issue_no_wifi">This detection mode needs at least one office Wi-Fi network.</string>
+    <string name="issue_no_days">No working days in the schedule.</string>
+    <string name="issue_fine">Precise location not allowed.</string>
+    <string name="issue_background">Location not allowed all the time.</string>
+    <string name="issue_location_off">Location is turned off.</string>
+    <string name="issue_notifications">Notifications are off (arrivals still logged).</string>
+    <string name="issue_battery">Battery optimised: Samsung may delay detection.</string>
+    <string name="issue_nearby">Nearby Wi-Fi permission not allowed.</string>
+    <string name="issue_wifi_off">Wi-Fi is turned off.</string>
+</resources>

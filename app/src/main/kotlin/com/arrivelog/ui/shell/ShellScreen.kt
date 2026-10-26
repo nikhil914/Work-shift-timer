@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,7 +49,7 @@ import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShellScreen(viewModel: ShellViewModel = hiltViewModel()) {
+fun ShellScreen(onSettings: () -> Unit, viewModel: ShellViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val signalTime by viewModel.signalTime.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
@@ -58,7 +59,14 @@ fun ShellScreen(viewModel: ShellViewModel = hiltViewModel()) {
         onPauseOrDispose { }
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.shell_title)) }) }) { padding ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.shell_title)) },
+                actions = { TextButton(onClick = onSettings) { Text(stringResource(R.string.settings_title)) } },
+            )
+        },
+    ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
