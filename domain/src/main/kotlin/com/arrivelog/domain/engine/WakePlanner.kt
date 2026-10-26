@@ -14,7 +14,7 @@ import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 
-enum class WakeReason { ARM, MISSED_ENTRY_CHECK, DISARM, NEXT_WORKING_DAY }
+enum class WakeReason { ARM, MISSED_ENTRY_CHECK, MISSED_ENTRY_RENOTIFY, DISARM, NEXT_WORKING_DAY }
 
 data class Wake(val at: Instant, val reason: WakeReason)
 
@@ -34,10 +34,11 @@ class WakePlanner @Inject constructor(
         todayRecord: WorkDay?,
         missedEntryCheckDone: Boolean,
         now: Instant = clock.instant(),
+        missedEntryRenotified: Boolean = false,
     ): Wake? {
         if (workplaces.isEmpty()) return null
         timeline(today, schedule)?.let { t ->
-            todayCandidates(t, settings, todayRecord, missedEntryCheckDone).filter { it.at.isAfter(now) }.minByOrNull { it.at }?.let { return it }
+            todayCandidates(t, settings, todayRecord, missedEntryCheckDone, missedEntryRenotified).filter { it.at.isAfter(now) }.minByOrNull { it.at }?.let { return it }
         }
         // Next working day's arm time (holidays and OFF days skipped). Two weeks covers any leave
         // block entered so far; the daily watchdog re-plans anyway.
@@ -48,11 +49,13 @@ class WakePlanner @Inject constructor(
         return null
     }
 
-    private fun todayCandidates(t: DayTimeline, settings: DetectionSettings, day: WorkDay?, missedDone: Boolean): List<Wake> = buildList {
+    private fun todayCandidates(t: DayTimeline, settings: DetectionSettings, day: WorkDay?, missedDone: Boolean, renotified: Boolean): List<Wake> = buildList {
         val markedOff = day != null && day.arrivalAt == null && day.status != DayStatus.WORKING
         if (markedOff) return@buildList
         add(Wake(t.armAt, WakeReason.ARM))
         if (day?.arrivalAt == null && !missedDone) add(Wake(t.missedEntryCheckAt, WakeReason.MISSED_ENTRY_CHECK))
+        // Spec: re-notify once, 60 min after the first reminder, if still unresolved.
+        if (day?.arrivalAt == null && missedDone && !renotified) add(Wake(t.missedEntryRenotifyAt, WakeReason.MISSED_ENTRY_RENOTIFY))
         if (day?.arrivalAt != null && settings.exitTrackingEnabled) add(Wake(t.disarmAt, WakeReason.DISARM))
     }
 

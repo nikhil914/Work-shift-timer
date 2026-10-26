@@ -26,6 +26,23 @@ fun WorkDayEntity.toDomain() = WorkDay(
     originalExitAt = originalExitAt,
 )
 
+fun WorkDay.toEntity(updatedAt: java.time.Instant) = WorkDayEntity(
+    date = date,
+    status = status,
+    arrivalAt = arrivalAt,
+    arrivalSource = arrivalSource,
+    arrivalWorkplaceId = arrivalWorkplaceId,
+    exitAt = exitAt,
+    exitSource = exitSource,
+    zoneId = zoneId?.id,
+    note = note,
+    arrivalEdited = arrivalEdited,
+    exitEdited = exitEdited,
+    originalArrivalAt = originalArrivalAt,
+    originalExitAt = originalExitAt,
+    updatedAt = updatedAt,
+)
+
 fun RawEventEntity.toDomain() = RawEvent(
     id = id,
     at = at,

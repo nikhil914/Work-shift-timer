@@ -13,6 +13,10 @@ import androidx.work.WorkManager
 import com.arrivelog.domain.engine.ArrivalDecisionEngine
 import com.arrivelog.domain.engine.DecisionContext
 import com.arrivelog.domain.engine.GeofenceArming
+import com.arrivelog.domain.engine.MissedEntryDecision
+import com.arrivelog.domain.model.DayStatus
+import com.arrivelog.domain.usecase.UndoArrivalUseCase
+import com.arrivelog.notify.Notifier
 import com.arrivelog.domain.engine.GeofenceSignature
 import com.arrivelog.domain.engine.ListenerPlan
 import com.arrivelog.domain.engine.ListenerPlanner
@@ -44,6 +48,11 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Lets screens ask for a re-plan after a manual edit without depending on the whole coordinator. */
+interface ReplanTrigger {
+    suspend fun afterEdit(date: java.time.LocalDate)
+}
+
 /**
  * Everything background funnels through here, serialised by one mutex:
  *  - [sync]: settle exits, run the missed-entry check when due, reconcile registrations with the
@@ -71,8 +80,38 @@ class DetectionCoordinator @Inject constructor(
     private val wakes: WakeScheduler,
     private val wifi: WifiSource,
     private val deviceStatus: DeviceStatus,
-) {
+    private val notifier: Notifier,
+    private val undo: UndoArrivalUseCase,
+) : ReplanTrigger {
     private val mutex = Mutex()
+
+    /** "Log now" / "Log 06:05" from the missed-entry notification (or any manual log). */
+    suspend fun logArrival(at: Instant?) = mutex.withLock {
+        val now = engine.now()
+        handle(processSignal(Signal.Manual(at = at ?: now, receivedAt = now)))
+        notifier.cancelMissed()
+        syncLocked("MANUAL_LOG", force = false)
+    }
+
+    /** "Undo" on the arrival notification. Listeners come back if the window is still open. */
+    suspend fun undoArrival(date: java.time.LocalDate) = mutex.withLock {
+        if (undo(date)) notifier.cancelArrival()
+        syncLocked("UNDO", force = false)
+    }
+
+    /** After an edit-sheet save: resolve reminders and re-plan listeners for today. */
+    override suspend fun afterEdit(date: java.time.LocalDate) = mutex.withLock {
+        if (date == engine.today()) syncLocked("EDIT", force = false)
+    }
+
+    /** Post / update the arrival notification when today's stored arrival actually changed. */
+    private fun handle(result: com.arrivelog.domain.usecase.SignalResult) {
+        val arrival = result.arrivalChanged ?: return
+        val day = result.day ?: return
+        if (day.date != engine.today()) return
+        notifier.cancelMissed()
+        notifier.showArrival(day.date, arrival.at, day.zoneId ?: engine.zone, arrival.source, arrival.estimated)
+    }
 
     suspend fun sync(reason: String, force: Boolean = false) = mutex.withLock { syncLocked(reason, force) }
 
@@ -104,7 +143,7 @@ class DetectionCoordinator @Inject constructor(
                 Geofence.GEOFENCE_TRANSITION_EXIT -> Signal.GeofenceExit(workplaceId, at, now, accuracy, connectedAtExit)
                 else -> null
             }
-            signal?.let { processSignal(it) }
+            signal?.let { handle(processSignal(it)) }
         }
 
         // Already awake: a free read of cached scan results, if the user enabled "in range".
@@ -116,7 +155,7 @@ class DetectionCoordinator @Inject constructor(
         val now = engine.now()
         val network = intent.network()
         val connection = wifi.currentConnection(network) ?: WifiNetwork(null, null)
-        processSignal(Signal.WifiConnected(connection, at = now, receivedAt = now))
+        handle(processSignal(Signal.WifiConnected(connection, at = now, receivedAt = now)))
         syncLocked("WIFI", force = false)
     }
 
@@ -125,7 +164,7 @@ class DetectionCoordinator @Inject constructor(
         if (!app.detection.wifiInRangeCountsAsPresent || isPowerSave()) return
         if (!deviceStatus.granted(Manifest.permission.ACCESS_FINE_LOCATION)) return
         val networks = wifi.cachedScanResults().map { WifiNetwork(it.ssid, it.bssid) }
-        if (networks.isNotEmpty()) processSignal(Signal.WifiInRange(networks, at = now, receivedAt = now))
+        if (networks.isNotEmpty()) handle(processSignal(Signal.WifiInRange(networks, at = now, receivedAt = now)))
     }
 
     private suspend fun syncLocked(reason: String, force: Boolean) {
@@ -138,24 +177,39 @@ class DetectionCoordinator @Inject constructor(
         settleDay(today)
 
         val app = settingsRepo.current()
-        var ctx = loader.load(today)
+        val ctx = loader.load(today)
 
-        // Missed-entry check, once per day, when due. (Phase 4 turns this into the notification.)
+        // Missed-entry check once when due, then one re-notify 60 min later if still unresolved.
         val timeline = engine.timelineFor(today, ctx.schedule)
         var state = arming.get()
-        if (app.setupCompleted && timeline != null && !now.isBefore(timeline.missedEntryCheckAt) &&
-            state.missedEntryCheckDate != today && ctx.day?.arrivalAt == null
-        ) {
-            checkMissedEntry(today)
-            state = arming.update { it.copy(missedEntryCheckDate = today) }
-            ctx = loader.load(today)
+        val unresolved = ctx.day?.arrivalAt == null && (ctx.day == null || ctx.day?.status == DayStatus.WORKING)
+        if (app.setupCompleted && timeline != null && unresolved) {
+            val firstDue = state.missedEntryCheckDate != today && !now.isBefore(timeline.missedEntryCheckAt)
+            val renotifyDue = state.missedEntryCheckDate == today && state.missedEntryRenotifyDate != today &&
+                !now.isBefore(timeline.missedEntryRenotifyAt)
+            if (firstDue || renotifyDue) {
+                val decision = checkMissedEntry(today)
+                if (decision is MissedEntryDecision.Notify) {
+                    notifier.showMissedEntry(today, decision.suggestedArrival, engine.zone, reminder = renotifyDue)
+                }
+                state = arming.update {
+                    if (firstDue) it.copy(missedEntryCheckDate = today) else it.copy(missedEntryRenotifyDate = today)
+                }
+            }
+        } else if (!unresolved) {
+            notifier.cancelMissed() // arrival logged or day marked: the reminder is obsolete
         }
 
         val plan = if (app.setupCompleted) listenerPlanner.plan(ctx, now) else idlePlan()
         reconcile(plan, ctx, state, now, force)
 
         val wake = if (app.setupCompleted) {
-            wakePlanner.next(today, ctx.schedule, ctx.settings, ctx.workplaces, ctx.day, state.missedEntryCheckDate == today, now)
+            wakePlanner.next(
+                today, ctx.schedule, ctx.settings, ctx.workplaces, ctx.day,
+                missedEntryCheckDone = state.missedEntryCheckDate == today,
+                now = now,
+                missedEntryRenotified = state.missedEntryRenotifyDate == today,
+            )
         } else {
             null
         }

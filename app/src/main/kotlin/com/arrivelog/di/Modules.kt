@@ -108,4 +108,5 @@ abstract class RepositoryModule {
     @Binds abstract fun workplaces(impl: RoomWorkplaceRepository): WorkplaceRepository
     @Binds abstract fun settings(impl: DataStoreSettingsRepository): SettingsRepository
     @Binds abstract fun transactions(impl: RoomTransactionRunner): TransactionRunner
+    @Binds abstract fun replan(impl: com.arrivelog.background.DetectionCoordinator): com.arrivelog.background.ReplanTrigger
 }

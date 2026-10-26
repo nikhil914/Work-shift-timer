@@ -33,6 +33,9 @@ interface WorkDayRepository {
     suspend fun markStatus(date: LocalDate, status: DayStatus): Boolean
 
     suspend fun delete(date: LocalDate)
+
+    /** Writes the whole day as given (manual edits / undo). */
+    suspend fun save(day: WorkDay)
 }
 
 interface DetectionStateRepository {

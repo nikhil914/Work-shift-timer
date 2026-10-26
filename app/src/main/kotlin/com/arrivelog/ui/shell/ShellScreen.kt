@@ -49,7 +49,7 @@ import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShellScreen(onSettings: () -> Unit, viewModel: ShellViewModel = hiltViewModel()) {
+fun ShellScreen(onBack: () -> Unit, viewModel: ShellViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val signalTime by viewModel.signalTime.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
@@ -63,7 +63,7 @@ fun ShellScreen(onSettings: () -> Unit, viewModel: ShellViewModel = hiltViewMode
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.shell_title)) },
-                actions = { TextButton(onClick = onSettings) { Text(stringResource(R.string.settings_title)) } },
+                navigationIcon = { TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) } },
             )
         },
     ) { padding ->

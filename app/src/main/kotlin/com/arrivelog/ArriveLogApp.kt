@@ -23,6 +23,7 @@ class ArriveLogApp : Application(), Configuration.Provider {
     @Inject lateinit var coordinator: DetectionCoordinator
     @Inject lateinit var settings: SettingsRepository
     @Inject lateinit var workplaces: WorkplaceRepository
+    @Inject lateinit var notifier: com.arrivelog.notify.Notifier
 
     @Inject @ApplicationScope
     lateinit var scope: CoroutineScope
@@ -33,6 +34,7 @@ class ArriveLogApp : Application(), Configuration.Provider {
     @OptIn(FlowPreview::class)
     override fun onCreate() {
         super.onCreate()
+        notifier.ensureChannels()
         // Setup edited (workplaces, mode, schedule, ...): re-plan and re-register once the edits
         // settle. drop(1) ignores the initial value, so a process started by a receiver does nothing here.
         scope.launch {
