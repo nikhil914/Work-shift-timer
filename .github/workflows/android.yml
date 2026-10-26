@@ -20,6 +20,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # Bump to "0.2" etc. for a new minor line; the patch number is the workflow run number.
+  VERSION_PREFIX: "0.1"
   # SHA-256 of the one-and-only release certificate. Public information; the build fails if a
   # different key ever signs the APK, so every release stays installable over the previous one.
   EXPECTED_CERT_SHA256: 26906dc7e9cd41b07538eb4158b1905150b5ad402881191591b66cbedfbf8bab
@@ -49,7 +51,8 @@ jobs:
           elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             echo "ARRIVELOG_VERSION_NAME=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
           else
-            echo "ARRIVELOG_VERSION_NAME=0.1.${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+            # Plain X.Y.Z so Obtainium can match the release tag to the installed versionName.
+            echo "ARRIVELOG_VERSION_NAME=${VERSION_PREFIX}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           fi
 
       - name: Tests
@@ -117,28 +120,29 @@ jobs:
             domain/build/reports/tests/
             app/build/reports/tests/
 
-      # Versioned release: push a tag vX.Y.Z, or Actions > Android build > Run workflow with a version.
-      - name: Versioned release
-        if: steps.keystore.outputs.available == 'true' && (startsWith(github.ref, 'refs/tags/v') || github.event.inputs.release_version != '')
+      # Every signed build from main (and every vX.Y.Z tag / manual run with a version) becomes a
+      # normal GitHub Release with a unique tag, so Obtainium sees each update.
+      - name: GitHub Release
+        if: >-
+          steps.keystore.outputs.available == 'true' && (
+            (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+            startsWith(github.ref, 'refs/tags/v') ||
+            github.event.inputs.release_version != '' )
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ env.ARRIVELOG_VERSION_NAME }}
           target_commitish: ${{ github.sha }}
           name: ArriveLog ${{ env.ARRIVELOG_VERSION_NAME }}
+          prerelease: false
+          make_latest: "true"
           files: |
             out/ArriveLog-${{ env.ARRIVELOG_VERSION_NAME }}.apk
             out/ArriveLog-${{ env.ARRIVELOG_VERSION_NAME }}.aab
           generate_release_notes: true
 
-      # Rolling "latest" pre-release: always the newest signed APK from main, easy to grab on the phone.
-      - name: Latest build release
+      # One-time cleanup of the old rolling pre-release (harmless when already gone).
+      - name: Remove old 'latest' pre-release
         if: steps.keystore.outputs.available == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release delete latest --cleanup-tag --yes --repo "$GITHUB_REPOSITORY" || true
-          cp "out/ArriveLog-${ARRIVELOG_VERSION_NAME}.apk" out/ArriveLog-latest.apk
-          gh release create latest out/ArriveLog-latest.apk \
-            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
-            --title "Latest build (main)" \
-            --notes "Signed build ${ARRIVELOG_VERSION_NAME} (versionCode ${ARRIVELOG_VERSION_CODE}) from ${GITHUB_SHA::7}. Installs over any earlier ArriveLog release."
+        run: gh release delete latest --cleanup-tag --yes --repo "$GITHUB_REPOSITORY" || true

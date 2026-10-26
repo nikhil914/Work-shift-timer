@@ -72,8 +72,8 @@ Every build on GitHub Actions (`.github/workflows/android.yml`) runs the tests, 
 
 - a debug APK (always),
 - a **signed release APK + AAB** when the signing secrets are present,
-- on every push to `main`: a **"Latest build (main)"** pre-release with the newest signed APK (replaced each time),
-- a versioned GitHub Release (APK + AAB) when you push a tag `vX.Y.Z`, or from Actions → *Android build* → **Run workflow** with a version such as `0.2.0`.
+- a **GitHub Release** for every signed build from `main`, tagged `v0.1.<run>` with matching `versionName` (APK + AAB). Works with Obtainium: add `https://github.com/nikhil914/Work-shift-timer`.
+- a release for a tag `vX.Y.Z`, or from Actions → *Android build* → **Run workflow** with a version such as `0.2.0`. Bump `VERSION_PREFIX` in the workflow for a new minor line.
 
 `versionCode` = 100 + the workflow run number, so it only goes up and every CI build installs over the previous one.
 One keystore signs every release; the workflow fails if an APK is ever signed with a different certificate.
