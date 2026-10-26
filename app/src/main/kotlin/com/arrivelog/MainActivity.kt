@@ -24,7 +24,9 @@ import com.arrivelog.domain.repository.SettingsRepository
 import com.arrivelog.ui.debug.DebugLogScreen
 import com.arrivelog.ui.nav.DebugLogRoute
 import com.arrivelog.ui.nav.DevToolsRoute
+import com.arrivelog.ui.nav.ExportRoute
 import com.arrivelog.ui.nav.HealthRoute
+import com.arrivelog.ui.export.ExportScreen
 import com.arrivelog.ui.nav.HomeRoute
 import com.arrivelog.ui.nav.StatsRoute
 import com.arrivelog.ui.health.HealthScreen
@@ -145,6 +147,7 @@ private fun AppNavHost(
             )
         }
         composable<DevToolsRoute> { ShellScreen(onBack = { nav.popBackStack() }) }
+        composable<ExportRoute> { ExportScreen(onBack = { nav.popBackStack() }) }
         composable<StatsRoute> { StatsScreen(onBack = { nav.popBackStack() }) }
         composable<HealthRoute> {
             HealthScreen(
@@ -156,6 +159,7 @@ private fun AppNavHost(
             SettingsScreen(
                 onOpen = { nav.navigate(it.route(wizard = false)) },
                 onHealth = { nav.navigate(HealthRoute) },
+                onExport = { nav.navigate(ExportRoute) },
                 onDebug = { nav.navigate(DebugLogRoute) },
                 onDevTools = { nav.navigate(DevToolsRoute) },
                 onBack = { nav.popBackStack() },

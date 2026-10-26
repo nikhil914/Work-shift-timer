@@ -19,6 +19,7 @@ import com.arrivelog.domain.model.DayStatus
 import com.arrivelog.domain.usecase.LogExitUseCase
 import com.arrivelog.domain.usecase.UndoArrivalUseCase
 import com.arrivelog.notify.Notifier
+import com.arrivelog.widget.WidgetUpdater
 import com.arrivelog.domain.engine.GeofenceSignature
 import com.arrivelog.domain.engine.ListenerPlan
 import com.arrivelog.domain.engine.ListenerPlanner
@@ -85,6 +86,7 @@ class DetectionCoordinator @Inject constructor(
     private val notifier: Notifier,
     private val undo: UndoArrivalUseCase,
     private val logExit: LogExitUseCase,
+    private val widget: WidgetUpdater,
 ) : ReplanTrigger {
     private val mutex = Mutex()
 
@@ -245,6 +247,10 @@ class DetectionCoordinator @Inject constructor(
         arming.update { it.copy(nextWakeAt = wake?.at, nextWakeReason = wake?.reason?.name) }
 
         if (state.housekeepingDate != today) housekeeping(now, today)
+
+        val day = ctx.day
+        val missedDue = timeline != null && !now.isBefore(timeline.missedEntryCheckAt)
+        widget.refreshIfChanged("$today|${day?.arrivalAt}|${day?.exitAt}|${day?.status}|$missedDue|${app.schedule.hashCode()}")
     }
 
     private suspend fun reconcile(plan: ListenerPlan, ctx: DecisionContext, state: ArmingState, now: Instant, force: Boolean) {
