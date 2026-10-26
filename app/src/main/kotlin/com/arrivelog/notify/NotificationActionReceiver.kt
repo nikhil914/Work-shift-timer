@@ -12,7 +12,7 @@ import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 
-/** "Undo" on the arrival notification and "Log now" on the missed-entry one: no UI needed. */
+/** "Undo" on the arrival notification, "Log now" on the missed-entry one, "Left now" on the exit reminder: no UI needed. */
 @AndroidEntryPoint(BroadcastReceiver::class)
 class NotificationActionReceiver : Hilt_NotificationActionReceiver() {
     @Inject lateinit var coordinator: DetectionCoordinator
@@ -29,11 +29,13 @@ class NotificationActionReceiver : Hilt_NotificationActionReceiver() {
                 val at = intent.getLongExtra(Notifier.EXTRA_AT, -1L).takeIf { it > 0 }?.let(Instant::ofEpochMilli)
                 runAsync(scope, "log") { coordinator.logArrival(at) }
             }
+            ACTION_LEFT -> runAsync(scope, "left") { coordinator.logExitNow(date) }
         }
     }
 
     companion object {
         const val ACTION_UNDO = "com.arrivelog.action.UNDO_ARRIVAL"
         const val ACTION_LOG = "com.arrivelog.action.LOG_ARRIVAL"
+        const val ACTION_LEFT = "com.arrivelog.action.LOG_EXIT"
     }
 }

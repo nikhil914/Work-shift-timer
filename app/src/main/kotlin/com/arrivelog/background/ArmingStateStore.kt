@@ -32,6 +32,8 @@ data class ArmingState(
     val lastErrorAt: Instant? = null,
     val missedEntryCheckDate: LocalDate? = null,
     val missedEntryRenotifyDate: LocalDate? = null,
+    /** "Still at work?" was posted on this date (once a day at most). */
+    val exitReminderDate: LocalDate? = null,
     val nextWakeAt: Instant? = null,
     val nextWakeReason: String? = null,
     val housekeepingDate: LocalDate? = null,
@@ -72,6 +74,7 @@ class ArmingStateStore @Inject constructor(@ApplicationContext private val conte
         lastErrorAt = this[ERROR_AT]?.let(Instant::ofEpochMilli),
         missedEntryCheckDate = this[MISSED_DATE]?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
         missedEntryRenotifyDate = this[RENOTIFY_DATE]?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+        exitReminderDate = this[EXIT_REMINDER_DATE]?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
         nextWakeAt = this[NEXT_WAKE]?.let(Instant::ofEpochMilli),
         nextWakeReason = this[NEXT_REASON],
         housekeepingDate = this[HOUSEKEEPING]?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
@@ -86,6 +89,7 @@ class ArmingStateStore @Inject constructor(@ApplicationContext private val conte
         put(ERROR_AT, s.lastErrorAt?.toEpochMilli())
         put(MISSED_DATE, s.missedEntryCheckDate?.toString())
         put(RENOTIFY_DATE, s.missedEntryRenotifyDate?.toString())
+        put(EXIT_REMINDER_DATE, s.exitReminderDate?.toString())
         put(NEXT_WAKE, s.nextWakeAt?.toEpochMilli())
         put(NEXT_REASON, s.nextWakeReason)
         put(HOUSEKEEPING, s.housekeepingDate?.toString())
@@ -104,6 +108,7 @@ class ArmingStateStore @Inject constructor(@ApplicationContext private val conte
         val ERROR_AT = longPreferencesKey("last_error_at")
         val MISSED_DATE = stringPreferencesKey("missed_entry_check_date")
         val RENOTIFY_DATE = stringPreferencesKey("missed_entry_renotify_date")
+        val EXIT_REMINDER_DATE = stringPreferencesKey("exit_reminder_date")
         val NEXT_WAKE = longPreferencesKey("next_wake_at")
         val NEXT_REASON = stringPreferencesKey("next_wake_reason")
         val HOUSEKEEPING = stringPreferencesKey("housekeeping_date")

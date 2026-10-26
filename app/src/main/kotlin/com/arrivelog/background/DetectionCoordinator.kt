@@ -13,8 +13,10 @@ import androidx.work.WorkManager
 import com.arrivelog.domain.engine.ArrivalDecisionEngine
 import com.arrivelog.domain.engine.DecisionContext
 import com.arrivelog.domain.engine.GeofenceArming
+import com.arrivelog.domain.engine.ExitReminder
 import com.arrivelog.domain.engine.MissedEntryDecision
 import com.arrivelog.domain.model.DayStatus
+import com.arrivelog.domain.usecase.LogExitUseCase
 import com.arrivelog.domain.usecase.UndoArrivalUseCase
 import com.arrivelog.notify.Notifier
 import com.arrivelog.domain.engine.GeofenceSignature
@@ -82,6 +84,7 @@ class DetectionCoordinator @Inject constructor(
     private val deviceStatus: DeviceStatus,
     private val notifier: Notifier,
     private val undo: UndoArrivalUseCase,
+    private val logExit: LogExitUseCase,
 ) : ReplanTrigger {
     private val mutex = Mutex()
 
@@ -99,6 +102,13 @@ class DetectionCoordinator @Inject constructor(
         syncLocked("UNDO", force = false)
     }
 
+    /** "Left now" on the exit reminder. */
+    suspend fun logExitNow(date: java.time.LocalDate) = mutex.withLock {
+        logExit(date)
+        notifier.cancelExitReminder()
+        syncLocked("MANUAL_EXIT", force = false)
+    }
+
     /** After an edit-sheet save: resolve reminders and re-plan listeners for today. */
     override suspend fun afterEdit(date: java.time.LocalDate) = mutex.withLock {
         if (date == engine.today()) syncLocked("EDIT", force = false)
@@ -114,6 +124,12 @@ class DetectionCoordinator @Inject constructor(
     }
 
     suspend fun sync(reason: String, force: Boolean = false) = mutex.withLock { syncLocked(reason, force) }
+
+    /** What should be registered right now (Health screen compares it with what is). Read-only. */
+    suspend fun expectedPlan(): ListenerPlan {
+        if (!settingsRepo.current().setupCompleted) return idlePlan()
+        return listenerPlanner.plan(loader.load(engine.today()), engine.now())
+    }
 
     suspend fun onGeofenceEvent(intent: Intent) = mutex.withLock {
         val event = GeofencingEvent.fromIntent(intent) ?: return@withLock
@@ -200,6 +216,16 @@ class DetectionCoordinator @Inject constructor(
             notifier.cancelMissed() // arrival logged or day marked: the reminder is obsolete
         }
 
+        // Opt-in "Still at work? Add exit time", once, at expected end + 2 h.
+        if (ctx.day?.exitAt != null) notifier.cancelExitReminder()
+        if (app.setupCompleted && timeline != null && state.exitReminderDate != today &&
+            ExitReminder.isDue(timeline, ctx.settings, ctx.day, ctx.state, now)
+        ) {
+            notifier.showExitReminder(today)
+            system(now, "EXIT_REMINDER")
+            state = arming.update { it.copy(exitReminderDate = today) }
+        }
+
         val plan = if (app.setupCompleted) listenerPlanner.plan(ctx, now) else idlePlan()
         reconcile(plan, ctx, state, now, force)
 
@@ -209,6 +235,8 @@ class DetectionCoordinator @Inject constructor(
                 missedEntryCheckDone = state.missedEntryCheckDate == today,
                 now = now,
                 missedEntryRenotified = state.missedEntryRenotifyDate == today,
+                pendingExitAt = ctx.state.pendingExit?.at,
+                exitReminderSent = state.exitReminderDate == today,
             )
         } else {
             null
