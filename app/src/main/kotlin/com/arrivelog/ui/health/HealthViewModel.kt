@@ -74,6 +74,9 @@ class HealthViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HealthUiState())
 
+    /** Samsung adds its own "Sleeping apps" lists on top of Android's battery setting; it can't be read, only shown. */
+    val isSamsung: Boolean get() = deviceStatus.isSamsung
+
     fun refresh() = viewModelScope.launch {
         snapshot.value = Snapshot(deviceStatus.snapshot(), settings.current().detection.mode, coordinator.expectedPlan())
     }

@@ -1,5 +1,8 @@
 package com.arrivelog.ui.home
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -150,7 +154,33 @@ private fun TodayCard(day: DaySummary, pendingExitAt: Instant?, onClick: () -> U
                 )
             }
             if (day.edited) Text(stringResource(R.string.home_edited), style = MaterialTheme.typography.labelSmall)
+            day.arrivalAt?.let { arrival -> DailySummaryActions(day.date, arrival.fmt(day.zone), day.exitAt?.fmt(day.zone)) }
         }
+    }
+}
+
+/** Spec section 8: "26 Oct 2026 — Arrived 08:07" to the clipboard or the share sheet (Samsung Notes). */
+@Composable
+private fun DailySummaryActions(date: LocalDate, arrival: String, exit: String?) {
+    val context = LocalContext.current
+    val dateText = date.format(SUMMARY_DATE)
+    val text = if (exit != null) {
+        stringResource(R.string.summary_arrived_left, dateText, arrival, exit)
+    } else {
+        stringResource(R.string.summary_arrived, dateText, arrival)
+    }
+    Row {
+        TextButton(
+            onClick = {
+                context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText(dateText, text))
+            },
+        ) { Text(stringResource(R.string.summary_copy)) }
+        TextButton(
+            onClick = {
+                val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+                context.startActivity(Intent.createChooser(send, null))
+            },
+        ) { Text(stringResource(R.string.summary_share)) }
     }
 }
 
@@ -254,6 +284,7 @@ fun formatDuration(d: Duration): String = stringResource(R.string.duration_hm, d
 fun Instant.fmt(zone: ZoneId): String = atZone(zone).format(HHMM)
 
 val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+private val SUMMARY_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy")
 private val LONG_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM")
 private val SHORT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM")
 private val ROW_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE d MMM")

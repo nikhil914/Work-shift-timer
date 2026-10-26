@@ -77,6 +77,17 @@ fun HealthScreen(onPermissions: () -> Unit, onBack: () -> Unit, viewModel: Healt
                 s.checks.forEach { check -> CheckRow(check, onFix = { fix(check.item) }) }
             }
         }
+        if (viewModel.isSamsung) {
+            item {
+                SectionCard {
+                    Text(stringResource(R.string.health_samsung_title), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.health_samsung_body), style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = { SettingsIntents.launch(context, SettingsIntents.appDetails(context)) }) {
+                        Text(stringResource(R.string.health_samsung_open))
+                    }
+                }
+            }
+        }
         item {
             SectionCard {
                 Text(stringResource(R.string.health_details), style = MaterialTheme.typography.titleSmall)

@@ -27,18 +27,24 @@ import com.arrivelog.R
 import com.arrivelog.background.ArmingState
 import com.arrivelog.background.ArmingStateStore
 import com.arrivelog.background.DetectionCoordinator
+import com.arrivelog.domain.engine.GeofenceArming
+import com.arrivelog.domain.health.ListenerUptime
+import com.arrivelog.domain.health.ListenerUptimeCalculator
 import com.arrivelog.domain.model.RawEvent
 import com.arrivelog.domain.model.RawEventType
 import com.arrivelog.domain.repository.EventLogRepository
 import com.arrivelog.ui.common.SectionCard
+import com.arrivelog.ui.home.formatDuration
 import com.arrivelog.ui.common.StepScaffold
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,6 +67,14 @@ class DebugLogViewModel @Inject constructor(
 ) : ViewModel() {
     val events: StateFlow<List<RawEvent>> = eventLog.observeRecent(LIMIT).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val arming: StateFlow<ArmingState> = arming.state.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ArmingState())
+
+    /** Spec 5b "Measure it": hours each listener has been registered today, recomputed per new event. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val uptimeToday: StateFlow<ListenerUptime?> = eventLog.observeRecent(1).mapLatest {
+        val now = clock.instant()
+        val start = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
+        ListenerUptimeCalculator.compute(eventLog.between(start.minus(Duration.ofDays(2)), now), start, now)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _share = MutableSharedFlow<Intent>(extraBufferCapacity = 1)
     val share = _share.asSharedFlow()
@@ -127,6 +141,7 @@ fun DebugLogScreen(onBack: () -> Unit, viewModel: DebugLogViewModel = hiltViewMo
     val context = LocalContext.current
     val events by viewModel.events.collectAsStateWithLifecycle()
     val arming by viewModel.arming.collectAsStateWithLifecycle()
+    val uptime by viewModel.uptimeToday.collectAsStateWithLifecycle()
     val zone = viewModel.zone
 
     LaunchedEffect(Unit) { viewModel.share.collect { context.startActivity(it) } }
@@ -148,6 +163,15 @@ fun DebugLogScreen(onBack: () -> Unit, viewModel: DebugLogViewModel = hiltViewMo
                 Mono(stringResource(R.string.debug_wifi, stringResource(if (arming.wifiArmed) R.string.shell_on else R.string.shell_off)))
                 Mono(stringResource(R.string.debug_next_wake, arming.nextWakeAt.fmt(zone), arming.nextWakeReason.orEmpty()))
                 Mono(stringResource(R.string.debug_wakes_today, viewModel.wakesToday(events)))
+                uptime?.let { u ->
+                    Mono(stringResource(R.string.debug_uptime, formatDuration(u.geofence), formatDuration(u.wifiCallback)))
+                }
+                Mono(
+                    stringResource(
+                        R.string.debug_active_now,
+                        (if (arming.geofenceArming != GeofenceArming.OFF) 1 else 0) + (if (arming.wifiArmed) 1 else 0),
+                    ),
+                )
                 arming.lastError?.let { Mono(stringResource(R.string.debug_last_error, it, arming.lastErrorAt.fmt(zone))) }
             }
         }

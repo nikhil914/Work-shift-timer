@@ -62,6 +62,34 @@
             </intent-filter>
         </receiver>
 
+        <!-- Home-screen widget (Glance). Exported: the launcher must reach it. Redrawn only on change. -->
+        <receiver
+            android:name=".widget.TodayWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_widget_info" />
+        </receiver>
+
+        <!-- Quick Settings tile: log arrival now. Only the system (BIND_QUICK_SETTINGS_TILE) can bind it. -->
+        <service
+            android:name=".tile.LogArrivalTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_arrival"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.ACTIVE_TILE"
+                android:value="false" />
+        </service>
+
         <!-- WorkManager is initialised by ArriveLogApp (Hilt worker factory), not by App Startup. -->
         <provider
             android:name="androidx.startup.InitializationProvider"
