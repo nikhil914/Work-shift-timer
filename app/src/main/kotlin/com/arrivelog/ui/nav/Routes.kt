@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable data object HomeRoute
 @Serializable data object SettingsRoute
+@Serializable data object DebugLogRoute
 @Serializable data class WorkplacesRoute(val wizard: Boolean)
 @Serializable data class WorkplaceEditRoute(val id: Long = 0L)
 @Serializable data class WifiRoute(val wizard: Boolean)

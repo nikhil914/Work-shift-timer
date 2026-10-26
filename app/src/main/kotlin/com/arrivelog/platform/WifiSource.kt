@@ -73,6 +73,22 @@ class WifiSource @Inject constructor(
         awaitClose { runCatching { cm.unregisterNetworkCallback(callback) } }
     }.distinctUntilChanged()
 
+    /**
+     * One-shot read of the current Wi-Fi connection, usable from a background receiver.
+     * On API 31+ capabilities from getNetworkCapabilities() have the SSID redacted, so this falls
+     * back to WifiManager.getConnectionInfo() (deprecated but still functional with background
+     * location granted). Returns null when not on Wi-Fi.
+     */
+    fun currentConnection(network: Network? = null): WifiNetwork? {
+        val cm = connectivity ?: return null
+        val target = network ?: cm.activeNetwork
+        val caps = target?.let { runCatching { cm.getNetworkCapabilities(it) }.getOrNull() }
+        if (caps != null && !caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return null
+        val fromCaps = caps?.toWifiNetwork()
+        if (fromCaps != null && WifiMatcher.normalizeSsid(fromCaps.ssid) != null) return fromCaps
+        return legacyConnectionInfo()?.takeIf { WifiMatcher.normalizeSsid(it.ssid) != null } ?: fromCaps
+    }
+
     /** Cached results only: free, no radio work. */
     @SuppressLint("MissingPermission")
     fun cachedScanResults(): List<ScannedNetwork> {

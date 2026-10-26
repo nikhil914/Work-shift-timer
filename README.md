@@ -1,7 +1,7 @@
 # ArriveLog
 
 Automatic workplace arrival logging (geofence + Wi-Fi), restricted to the working schedule.
-Built in phases. Done: **Phase 1** (data layer, decision engine, tests) and **Phase 2** (setup wizard, permissions).
+Built in phases. Done: **Phase 1** (data layer, decision engine, tests), **Phase 2** (setup wizard, permissions) and **Phase 3** (background detection).
 Distribution: **Google Play**.
 
 ## Decisions (26 Oct 2026)
@@ -79,6 +79,21 @@ First launch runs six steps; each can be reopened later from **Settings** (top-r
 
 Precise location is requested the first time it is needed (map or Wi-Fi step), with the same explanation, rather than only at step 5: Android won't show Wi-Fi names without it.
 Nothing runs in the background yet; that is Phase 3.
+
+## Phase 3: background detection
+
+`background/DetectionCoordinator` is the single entry point, serialised by one mutex:
+
+- **Signals**: `GeofenceReceiver` (Play services geofence PendingIntent) and `WifiReceiver` (`ConnectivityManager.registerNetworkCallback(request, PendingIntent)`, delivered even when the app is not running) hand off with `goAsync()`. Geofence time = trigger location's fix time; Wi-Fi time = callback time. EXIT also reads the current Wi-Fi (office Wi-Fi still connected = GPS jitter, ignored). With "count as present when in range" and Battery Saver off, cached scan results are read while already awake for a geofence event.
+- **Sync** (every wake): settle pending exits (today and yesterday), run the missed-entry check once when due (logged; notification in Phase 4), reconcile registrations with `ListenerPlanner` (re-register only when the geofence signature or Wi-Fi flag differs, or on force), schedule the single next wake, daily housekeeping (event log kept 90 days).
+- **Wakes**: one `AlarmManager.setAndAllowWhileIdle` alarm (inexact, Doze-allowed, no exact-alarm permission) at arm / missed-entry check / disarm / next working day, from `WakePlanner`. Plus a once-a-day WorkManager watchdog.
+- **Forced re-registration** on `BOOT_COMPLETED`, `MY_PACKAGE_REPLACED`, time / time-zone change, settings edits, the watchdog, and after `GEOFENCE_NOT_AVAILABLE` (Location toggled off).
+- **Battery guards**: fences expire one hour after their planned removal even if the disarm never runs; arrival with exit tracking off removes everything; days off register nothing.
+- **Settings → Debug log**: arming status, next wake, wake-ups today, last error, every raw event, CSV export, *Re-arm*.
+
+Device testing (mock locations, `adb` Wi-Fi toggles, Doze, reboot, battery stats): [`docs/TESTING.md`](docs/TESTING.md).
+
+Known limitation: Android doesn't deliver "Location turned back on" to a stopped app, so after Location is switched off and on, fences return at the next wake, app open, or watchdog.
 
 ### Google Maps API key
 
