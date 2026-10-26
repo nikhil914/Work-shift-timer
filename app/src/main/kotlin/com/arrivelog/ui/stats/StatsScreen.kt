@@ -115,11 +115,7 @@ private fun Summary(s: PeriodStats) {
         Text(stringResource(R.string.stats_on_time_detail, s.onTimeDays, s.ratedArrivals), style = MaterialTheme.typography.bodyMedium)
         StatRow(
             stringResource(R.string.stats_late_days),
-            if (s.averageLateMinutes != null) {
-                stringResource(R.string.stats_late_value, s.lateDays, s.averageLateMinutes)
-            } else {
-                s.lateDays.toString()
-            },
+            s.averageLateMinutes?.let { stringResource(R.string.stats_late_value, s.lateDays, it) } ?: s.lateDays.toString(),
         )
         StatRow(stringResource(R.string.stats_average), s.averageArrival?.format(HHMM) ?: DASH)
         StatRow(stringResource(R.string.stats_earliest), s.earliest?.let { stringResource(R.string.stats_dated, it.time.format(HHMM), it.date.format(DAY)) } ?: DASH)
