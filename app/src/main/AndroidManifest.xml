@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Permissions are declared now so the manifest is reviewed once; they are requested
+        step by step with explanation screens in Phase 2 and only used from Phase 3.
+    -->
+
+    <!-- Geofencing: FINE + BACKGROUND ("Allow all the time"). COARSE must be declared with FINE on 12+. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- Wi-Fi: connected SSID via ConnectivityManager/WifiManager, cached scan results. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- No neverForLocation flag: SSID matching is used to infer where the user is. -->
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Re-register geofences and the Wi-Fi PendingIntent after reboot (they do not survive it). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!--
+        No REQUEST_IGNORE_BATTERY_OPTIMIZATIONS: the app ships on Google Play, which limits that
+        permission to listed use cases. Phase 2 opens the battery-optimisation settings list
+        (no permission needed) plus the Samsung "Unrestricted" / "Never sleeping apps" steps.
+    -->
+
+    <!-- Only the setup map (tiles + search) uses the network, and only while it is on screen. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:name=".ArriveLogApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ArriveLog">
+
+        <!-- Key comes from local.properties via manifestPlaceholders; never committed. -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

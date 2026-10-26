@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ArriveLog</string>
+
+    <!-- Day status -->
+    <string name="status_working">Working</string>
+    <string name="status_day_off">Day off</string>
+    <string name="status_wfh">WFH</string>
+    <string name="status_leave">Leave</string>
+    <string name="status_holiday">Holiday</string>
+    <string name="status_weekend">Weekend</string>
+
+    <!-- Detection source -->
+    <string name="source_geofence">geofence</string>
+    <string name="source_wifi">Wi-Fi</string>
+    <string name="source_manual">manual</string>
+
+    <!-- Detection modes -->
+    <string name="mode_or">Geofence OR Wi-Fi</string>
+    <string name="mode_and">Geofence AND Wi-Fi</string>
+    <string name="mode_wifi">Wi-Fi only</string>
+    <string name="mode_geofence">Geofence only</string>
+
+    <!-- Phase 1 dev shell (replaced by Home in Phase 4) -->
+    <string name="shell_title">ArriveLog · Phase 1</string>
+    <string name="shell_today_title">Today, %1$s</string>
+    <string name="shell_day_working">%1$s · entry window %2$s–%3$s · expected %4$s</string>
+    <string name="shell_day_off">Not a working day (%1$s). No detection.</string>
+    <string name="shell_day_status">Marked: %1$s</string>
+    <string name="shell_arrival">Arrived %1$s · %2$s</string>
+    <string name="shell_arrival_none">Arrival: not yet</string>
+    <string name="shell_exit">Left %1$s · %2$s</string>
+    <string name="shell_exit_none">Exit: —</string>
+    <string name="shell_exit_pending">Exit pending since %1$s (confirms after 10 min away)</string>
+    <string name="shell_plan">Listeners now: geofence %1$s, Wi-Fi callback %2$s (%3$s)</string>
+    <string name="shell_on">on</string>
+    <string name="shell_off">off</string>
+    <string name="shell_settings_title">Detection settings (saved to DataStore)</string>
+    <string name="shell_exit_tracking">Exit detection</string>
+    <string name="shell_sim_title">Simulate a signal</string>
+    <string name="shell_sim_hint">Signals go through the real engine and database. Phase 1 reads no location or Wi-Fi.</string>
+    <string name="shell_workplaces">Workplaces: %1$d · simulated Wi-Fi uses SSID “%2$s”</string>
+    <string name="shell_demo_workplace">Demo office</string>
+    <string name="shell_sim_time">Event time today (HH:mm)</string>
+    <string name="shell_sim_time_error">Use 24-hour time, e.g. 08:07</string>
+    <string name="sim_wifi">Office Wi-Fi connected</string>
+    <string name="sim_wifi_lost">Wi-Fi lost</string>
+    <string name="sim_enter">Geofence ENTER</string>
+    <string name="sim_dwell">Geofence DWELL</string>
+    <string name="sim_exit">Geofence EXIT</string>
+    <string name="sim_manual">Log now (manual)</string>
+    <string name="shell_settle">Settle pending exit</string>
+    <string name="shell_missed">Missed-entry check</string>
+    <string name="shell_reset">Reset today</string>
+    <string name="shell_last_result">Result: %1$s</string>
+    <string name="shell_events_title">Raw event log (latest 30)</string>
+    <string name="shell_events_empty">No events yet.</string>
+    <string name="shell_event_line">%1$s %2$s · %3$s</string>
+    <string name="shell_event_accepted">accepted</string>
+    <string name="shell_event_ignored">ignored</string>
+    <string name="shell_event_delay">processed %1$d s after the event</string>
+</resources>

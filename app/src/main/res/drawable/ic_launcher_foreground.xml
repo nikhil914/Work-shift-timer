@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Map pin with a check mark, inside the 66dp safe zone of a 108dp adaptive icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,26C42.4,26 33,35.4 33,47C33,62.8 54,82 54,82C54,82 75,62.8 75,47C75,35.4 65.6,26 54,26Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#00696E"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M44.5,47.5L51.5,54.5L64,41" />
+</vector>
