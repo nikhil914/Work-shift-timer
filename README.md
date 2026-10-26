@@ -1,7 +1,7 @@
 # ArriveLog
 
 Automatic workplace arrival logging (geofence + Wi-Fi), restricted to the working schedule.
-Built in phases. Done: **Phase 1** (data layer, decision engine, tests), **Phase 2** (setup wizard, permissions) and **Phase 3** (background detection).
+Built in phases. Done: **Phase 1** (data layer, decision engine, tests), **Phase 2** (setup wizard, permissions), **Phase 3** (background detection) and **Phase 4** (Home, day log, edit sheet, notifications).
 Distribution: **Google Play**.
 
 ## Decisions (26 Oct 2026)
@@ -31,7 +31,9 @@ Key files:
 - `domain/.../engine/ListenerPlanner.kt` — what may be registered right now (enforces the section 5b budget).
 - `domain/.../usecase/DetectionUseCases.kt` — `ProcessSignalUseCase` (the single entry point background receivers will call in Phase 3), `SettleDayUseCase`, `CheckMissedEntryUseCase`.
 - `app/.../data/db/Daos.kt` — the SQL re-enforces the arrival/exit rules independently of the engine.
-- `app/.../ui/shell/` — Phase 1 dev shell (replaced by Home in Phase 4).
+- `app/.../ui/home/` — Home screen, day log and edit sheet (Phase 4).
+- `app/.../notifications/` — arrival and missed-entry notifications and their actions.
+- `app/.../ui/shell/` — Phase 1 dev shell, now Settings → Simulator (dev).
 
 ## Phase 1: what exists
 
@@ -48,7 +50,7 @@ Key files:
   - Time zones: days and windows are evaluated in the current device zone (`DeviceZoneClock` re-reads it every call); each arrival stores its zone. DST gaps/overlaps tested with Europe/London.
 - **Concurrency**: decide + write + state + raw log happen in one Room transaction (tested with 20 simultaneous geofence/Wi-Fi signals → exactly one arrival).
 
-Tests: 90 domain unit tests + 19 Robolectric/JVM tests in `:app` (DAOs, settings serializer, engine-to-Room pipeline). Lint: clean except the intentional `OldTargetApi` (see below). The home-card ViewModel test from section 9 comes with the Home screen in Phase 4.
+Tests (Phase 1): 90 domain unit tests + 19 Robolectric/JVM tests in `:app` (DAOs, settings serializer, engine-to-Room pipeline). Lint: clean except the intentional `OldTargetApi` (see below). The home-card ViewModel test from section 9 (`HomeViewModelTest`) came with Phase 4.
 
 Battery cost of Phase 1: zero. Nothing runs in the background; no permissions are requested yet.
 
@@ -59,7 +61,7 @@ Battery cost of Phase 1: zero. Nothing runs in the background; no permissions ar
 3. **Radius 150–500 m** (spec section 1 said 100–500; section 5b sets a 150 m minimum). 5b wins; stored values are clamped.
 4. **Wi-Fi PendingIntent callback**: `registerNetworkCallback(request, PendingIntent)` is delivered when a matching network becomes *available*; it has no "lost" delivery, and `FLAG_INCLUDE_LOCATION_INFO` applies only to `NetworkCallback` objects. Plan for Phase 3: read the SSID in the receiver via `WifiManager.getConnectionInfo()` (works with background location granted), treat every "available" as a new connection, and detect exits through geofence EXIT. Wi-Fi-lost is only seen while the process is alive (best effort). Will be verified on the S23 in Phase 3.
 5. **Late delivery vs. window**: "outside the window never creates an arrival" is applied to the arrival *time*, not the processing time, so an ENTER at 10:58 confirmed at 11:03 still counts (window end + 10 min grace).
-6. **"Never blank"**: the app can't force a choice if both missed-entry notifications are ignored. Unresolved past working days will be flagged "needs attention" on Home (Phase 4).
+6. **"Never blank"**: the app can't force a choice if both missed-entry notifications are ignored. Unresolved past working days are flagged "needs a time or status" on Home, with a banner counting them.
 7. **Job budget**: arm, missed-entry check (which also disarms when nothing was detected) and disarm = 3 per working day; 2 when exit tracking is off. The re-notify (only on missed days) and the opt-in exit reminder add one each. Phase 3 will also propose `AlarmManager.setAndAllowWhileIdle` (inexact, no exact-alarm permission) for the arm trigger, because WorkManager can defer a 06:15 job in Doze until the phone is picked up.
 8. **`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`** is removed (Play restricts it). Phase 2 uses the battery-optimisation settings list intent plus Samsung's "Unrestricted" and "Never sleeping apps" instructions instead.
 9. **"Fully offline"**: the background is offline. The setup map needs network for tiles and search while it is on screen, so `INTERNET` is declared. Phase 2 will use the platform `Geocoder` for search (no Places API billing) unless you prefer Places.
@@ -85,7 +87,7 @@ Nothing runs in the background yet; that is Phase 3.
 `background/DetectionCoordinator` is the single entry point, serialised by one mutex:
 
 - **Signals**: `GeofenceReceiver` (Play services geofence PendingIntent) and `WifiReceiver` (`ConnectivityManager.registerNetworkCallback(request, PendingIntent)`, delivered even when the app is not running) hand off with `goAsync()`. Geofence time = trigger location's fix time; Wi-Fi time = callback time. EXIT also reads the current Wi-Fi (office Wi-Fi still connected = GPS jitter, ignored). With "count as present when in range" and Battery Saver off, cached scan results are read while already awake for a geofence event.
-- **Sync** (every wake): settle pending exits (today and yesterday), run the missed-entry check once when due (logged; notification in Phase 4), reconcile registrations with `ListenerPlanner` (re-register only when the geofence signature or Wi-Fi flag differs, or on force), schedule the single next wake, daily housekeeping (event log kept 90 days).
+- **Sync** (every wake): settle pending exits (today and yesterday), run the missed-entry check once when due (posts the notification, see Phase 4), reconcile registrations with `ListenerPlanner` (re-register only when the geofence signature or Wi-Fi flag differs, or on force), schedule the single next wake, daily housekeeping (event log kept 90 days).
 - **Wakes**: one `AlarmManager.setAndAllowWhileIdle` alarm (inexact, Doze-allowed, no exact-alarm permission) at arm / missed-entry check / disarm / next working day, from `WakePlanner`. Plus a once-a-day WorkManager watchdog.
 - **Forced re-registration** on `BOOT_COMPLETED`, `MY_PACKAGE_REPLACED`, time / time-zone change, settings edits, the watchdog, and after `GEOFENCE_NOT_AVAILABLE` (Location toggled off).
 - **Battery guards**: fences expire one hour after their planned removal even if the disarm never runs; arrival with exit tracking off removes everything; days off register nothing.
@@ -141,7 +143,21 @@ For Google Play, enrol in Play App Signing and choose **"Use my own key"** (uplo
 - **Release**: Android App Bundle, Play App Signing, Maps key restricted to the package and the Play signing SHA-1 (Phase 6).
 - **applicationId** is `com.arrivelog` for now and cannot change after the first upload, so pick the final one before publishing.
 
+## Phase 4: Home, day log, edit sheet, notifications
+
+- **Home** (opens after setup): today's card shows the arrival time large, a chip (*On time* / *Late by 12 min* / *Not yet* / *Not detected* / *Day off*, *WFH*, *Weekend* …), the source (📍 geofence, 📶 Wi-Fi, ✋ manual), a live *At work for* counter while you have no exit (it only ticks while the screen is visible), and the exit time. *Log arrival now* appears while nothing is logged.
+- **Day log**: every day from the first recorded one, newest first, grouped by Monday weeks with the week's total. Row: date, arrival – exit, duration, source, ✎ if edited. Off days are greyed; past working days with neither an arrival nor a status show *Needs a time or status*.
+- **Edit sheet** (tap a row or the card): arrival, exit, status (Working / Day off / WFH / Leave), note. Editing an auto-detected time keeps the detected time (*Detected 08:07 by Wi-Fi, edited by you*) and stops later auto signals from changing it. Clearing the arrival clears the exit and lets detection log again.
+- **Notifications**
+  - *Arrived 08:07 — logged* (geofence / Wi-Fi / by hand; *estimated* when you were already inside at arm time). **Edit time** opens the sheet on the arrival picker. **Undo** clears it and forgets the evidence, and the fences are re-armed *without* the "already inside" trigger so the same presence is not logged again a second later; a fresh entry or Wi-Fi connection logs normally.
+  - *No arrival detected today* (high priority) at window end + 10 min. **Log now** (only on the day itself), **Pick time** (preselects presence seen before the window, if any), **Day off / WFH / Leave**. Repeated once 60 min later if still unresolved (one extra wake, only on such days). Logging an arrival or marking the day cancels it.
+  - Without the notification permission both are skipped; Home still flags the day.
+
+Not in Phase 4: the exit reminder (*Still at work?*), stats and the health screen come in Phase 5.
+
 ## Testing Phase 1 on the phone
+
+These steps now live under **Settings → Simulator (dev)**.
 
 Install: `adb install -r app/build/outputs/apk/debug/app-debug.apk` (or Run from Studio).
 The shell drives the real engine and database with simulated signals at a time you type (today only). The first simulated signal creates a "Demo office" (SSID `ArriveLog-Demo`).
@@ -157,4 +173,4 @@ The shell drives the real engine and database with simulated signals at a time y
 
 ## Later phases (not built yet)
 
-2 setup wizard + permissions · 3 background detection · 4 home/log/edit/notifications · 5 exit/stats/health · 6 export/widget/QS tile/backup + battery audit.
+5 exit/stats/health · 6 export/widget/QS tile/backup + battery audit.
