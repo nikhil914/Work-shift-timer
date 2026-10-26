@@ -1,0 +1,4 @@
+# Copy to local.properties (Android Studio usually creates it and fills sdk.dir).
+# sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk
+# Google Maps SDK for Android key, restricted to package com.arrivelog + your signing SHA-1.
+MAPS_API_KEY=

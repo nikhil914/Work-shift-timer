@@ -1,0 +1,118 @@
+name: Android build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write # create GitHub Releases for v* tags
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # SHA-256 of the one-and-only release certificate. Public information; the build fails if a
+  # different key ever signs the APK, so every release stays installable over the previous one.
+  EXPECTED_CERT_SHA256: 26906dc7e9cd41b07538eb4158b1905150b5ad402881191591b66cbedfbf8bab
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Version
+        run: |
+          # versionCode only ever goes up: workflow run number (+100 headroom for manual builds).
+          echo "ARRIVELOG_VERSION_CODE=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "ARRIVELOG_VERSION_NAME=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          else
+            echo "ARRIVELOG_VERSION_NAME=0.1.${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Tests
+        run: ./gradlew :domain:test :app:testDebugUnitTest --stacktrace
+
+      - name: Debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Decode release keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ARRIVELOG_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Release keystore secrets not set (or a fork PR): skipping signed release build."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          echo "ARRIVELOG_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
+      - name: Signed release APK + AAB
+        if: steps.keystore.outputs.available == 'true'
+        env:
+          ARRIVELOG_KEYSTORE_PASSWORD: ${{ secrets.ARRIVELOG_KEYSTORE_PASSWORD }}
+          ARRIVELOG_KEY_ALIAS: ${{ secrets.ARRIVELOG_KEY_ALIAS }}
+          ARRIVELOG_KEY_PASSWORD: ${{ secrets.ARRIVELOG_KEY_PASSWORD }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+        run: ./gradlew :app:assembleRelease :app:bundleRelease
+
+      - name: Verify signing certificate
+        if: steps.keystore.outputs.available == 'true'
+        run: |
+          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
+          APK=app/build/outputs/apk/release/app-release.apk
+          ACTUAL=$("$APKSIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print $NF}')
+          echo "Signed with $ACTUAL"
+          if [ "$ACTUAL" != "$EXPECTED_CERT_SHA256" ]; then
+            echo "::error::APK signed with an unexpected certificate. Updates would not install over existing copies."
+            exit 1
+          fi
+
+      - name: Collect outputs
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/debug/app-debug.apk "out/ArriveLog-${ARRIVELOG_VERSION_NAME}-debug.apk"
+          if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+            cp app/build/outputs/apk/release/app-release.apk "out/ArriveLog-${ARRIVELOG_VERSION_NAME}.apk"
+            cp app/build/outputs/bundle/release/app-release.aab "out/ArriveLog-${ARRIVELOG_VERSION_NAME}.aab"
+          fi
+          rm -f "$RUNNER_TEMP/release.jks"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ArriveLog-${{ env.ARRIVELOG_VERSION_NAME }}
+          path: out/
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: test-reports
+          path: |
+            domain/build/reports/tests/
+            app/build/reports/tests/
+
+      - name: GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') && steps.keystore.outputs.available == 'true'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            out/ArriveLog-${{ env.ARRIVELOG_VERSION_NAME }}.apk
+            out/ArriveLog-${{ env.ARRIVELOG_VERSION_NAME }}.aab
+          generate_release_notes: true

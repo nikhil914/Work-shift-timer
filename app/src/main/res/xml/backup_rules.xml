@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 8–11 equivalent of data_extraction_rules.xml. -->
+<full-backup-content>
+    <include domain="database" path="arrivelog.db" />
+    <include domain="file" path="datastore/settings.json" />
+</full-backup-content>
