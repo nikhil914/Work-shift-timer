@@ -180,7 +180,7 @@
     <string name="test_verdict_no">If the entry window were open now, no arrival would be logged.</string>
     <string name="test_today_window">Today: %1$s, entry window %2$s–%3$s.</string>
     <string name="test_today_off">Today is not a working day.</string>
-    <string name="test_phase_note">Background detection is switched on in the next app update (Phase 3). This screen checks the setup only.</string>
+    <string name="test_phase_note">Background detection is on once setup is finished. Notifications arrive in the next update; until then check Settings → Debug log.</string>
 
     <!-- Readiness issues -->
     <string name="issue_no_workplace">No workplace saved.</string>
@@ -193,4 +193,16 @@
     <string name="issue_battery">Battery optimised: Samsung may delay detection.</string>
     <string name="issue_nearby">Nearby Wi-Fi permission not allowed.</string>
     <string name="issue_wifi_off">Wi-Fi is turned off.</string>
+
+    <!-- Debug log (Phase 3) -->
+    <string name="debug_title">Debug log</string>
+    <string name="debug_sub">Every detection signal, accepted or ignored, with the reason</string>
+    <string name="debug_export">Export CSV</string>
+    <string name="debug_sync">Re-arm</string>
+    <string name="debug_status">Status</string>
+    <string name="debug_geofence">Geofences: %1$s (registered %2$s)</string>
+    <string name="debug_wifi">Wi-Fi callback: %1$s</string>
+    <string name="debug_next_wake">Next wake: %1$s %2$s</string>
+    <string name="debug_wakes_today">Wake-ups today: %1$d</string>
+    <string name="debug_last_error">Last error: %1$s (%2$s)</string>
 </resources>

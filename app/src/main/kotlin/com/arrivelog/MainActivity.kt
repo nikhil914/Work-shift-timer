@@ -21,6 +21,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.arrivelog.domain.repository.SettingsRepository
+import com.arrivelog.ui.debug.DebugLogScreen
+import com.arrivelog.ui.nav.DebugLogRoute
 import com.arrivelog.ui.nav.HomeRoute
 import com.arrivelog.ui.nav.ModeRoute
 import com.arrivelog.ui.nav.PermissionsRoute
@@ -45,7 +47,11 @@ import com.arrivelog.ui.setup.workplaces.WorkplaceEditScreen
 import com.arrivelog.ui.setup.workplaces.WorkplacesScreen
 import com.arrivelog.ui.shell.ShellScreen
 import com.arrivelog.ui.theme.ArriveLogTheme
+import com.arrivelog.background.DetectionCoordinator
+import com.arrivelog.di.ApplicationScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -57,6 +63,17 @@ import javax.inject.Inject
 /** Single activity. First launch goes through the setup wizard; afterwards Home (Phase 1 shell for now). */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var coordinator: DetectionCoordinator
+
+    @Inject @ApplicationScope
+    lateinit var appScope: CoroutineScope
+
+    /** Opening the app re-checks registrations and settles exits (cheap; no re-registration if unchanged). */
+    override fun onResume() {
+        super.onResume()
+        appScope.launch { coordinator.sync("APP_OPEN") }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -90,8 +107,13 @@ private fun AppNavHost(main: MainViewModel = hiltViewModel()) {
     NavHost(navController = nav, startDestination = start) {
         composable<HomeRoute> { ShellScreen(onSettings = { nav.navigate(SettingsRoute) }) }
         composable<SettingsRoute> {
-            SettingsScreen(onOpen = { nav.navigate(it.route(wizard = false)) }, onBack = { nav.popBackStack() })
+            SettingsScreen(
+                onOpen = { nav.navigate(it.route(wizard = false)) },
+                onDebug = { nav.navigate(DebugLogRoute) },
+                onBack = { nav.popBackStack() },
+            )
         }
+        composable<DebugLogRoute> { DebugLogScreen(onBack = { nav.popBackStack() }) }
         composable<WorkplacesRoute> { entry ->
             val wizard = entry.toRoute<WorkplacesRoute>().wizard
             WorkplacesScreen(
