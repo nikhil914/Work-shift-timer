@@ -43,6 +43,11 @@ data class ListenerPlan(
     val reason: PlanReason,
     /** When this plan is next expected to change by itself (for scheduling), if ever today. */
     val nextChangeAt: Instant?,
+    /**
+     * ARRIVAL fences report "already inside" when registered. Off after Undo / clearing an arrival:
+     * re-arming while still inside must not log again the arrival the user just removed.
+     */
+    val initialTrigger: Boolean = false,
 ) {
     val isIdle: Boolean get() = geofence == GeofenceArming.OFF && !wifiCallback
 }
@@ -75,6 +80,7 @@ class ListenerPlanner @Inject constructor(
                     responsivenessMs = responsiveness,
                     reason = PlanReason.AWAITING_ARRIVAL,
                     nextChangeAt = timeline.missedEntryCheckAt,
+                    initialTrigger = mode.usesGeofence && ctx.state.ignoreEvidenceBefore == null,
                 )
             }
         }

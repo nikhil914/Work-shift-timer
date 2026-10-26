@@ -55,6 +55,8 @@ data class EditRequest(val date: LocalDate, val focus: EditFocus)
 @Composable
 fun HomeScreen(
     onSettings: () -> Unit,
+    onStats: () -> Unit,
+    onHealth: () -> Unit,
     editRequest: EditRequest?,
     onEditRequestHandled: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
@@ -74,7 +76,11 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
-                actions = { TextButton(onClick = onSettings) { Text(stringResource(R.string.settings_title)) } },
+                actions = {
+                    TextButton(onClick = onStats) { Text(stringResource(R.string.stats_title)) }
+                    TextButton(onClick = onHealth) { Text(stringResource(R.string.health_title)) }
+                    TextButton(onClick = onSettings) { Text(stringResource(R.string.settings_title)) }
+                },
             )
         },
     ) { padding ->

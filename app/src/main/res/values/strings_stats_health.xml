@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Exit reminder (Phase 5) -->
+    <string name="notif_exit_title">Still at work?</string>
+    <string name="notif_exit_body">No exit has been logged yet today. Add your exit time.</string>
+    <string name="notif_action_left_now">Left now</string>
+
+    <!-- Stats -->
+    <string name="stats_title">Stats</string>
+    <string name="stats_week">Week</string>
+    <string name="stats_month">Month</string>
+    <string name="stats_previous">‹ Prev</string>
+    <string name="stats_next">Next ›</string>
+    <string name="stats_range">%1$s – %2$s</string>
+    <string name="stats_empty">No arrivals logged in this period yet.</string>
+    <string name="stats_on_time_percent">%1$d%% on time</string>
+    <string name="stats_on_time_none">Nothing to rate yet</string>
+    <string name="stats_on_time_detail">%1$d of %2$d working days on time</string>
+    <string name="stats_late_days">Late days</string>
+    <string name="stats_late_value">%1$d (avg %2$d min late)</string>
+    <string name="stats_average">Average arrival</string>
+    <string name="stats_earliest">Earliest</string>
+    <string name="stats_latest">Latest</string>
+    <string name="stats_dated">%1$s · %2$s</string>
+    <string name="stats_total_hours">Total hours</string>
+    <string name="stats_hours_value">%1$s over %2$d days</string>
+    <string name="stats_missing">Days with nothing logged</string>
+    <string name="stats_weekly_title">Average arrival per week</string>
+    <string name="stats_week_of">Week of %1$s</string>
+    <string name="stats_week_value">%1$s · %2$d days</string>
+    <string name="stats_chart_title">Arrival times this month</string>
+    <string name="stats_chart_legend">Dots are arrivals (red = late). The dashed line is your expected start.</string>
+    <string name="stats_chart_description">Arrival chart: %1$d arrivals, %2$d late, expected start %3$s</string>
+
+    <!-- Health -->
+    <string name="health_title">Health</string>
+    <string name="settings_health_sub">Check that detection can work: permissions, battery, registrations</string>
+    <string name="health_rearm">Re-arm now</string>
+    <string name="health_all_good">All good</string>
+    <string name="health_all_good_body">Everything detection needs is in place.</string>
+    <string name="health_needs_fix">Something needs fixing</string>
+    <string name="health_needs_fix_body">Arrivals may be missed until the red items are fixed.</string>
+    <string name="health_not_used">Not used in your detection mode</string>
+    <string name="health_fix">Fix</string>
+    <string name="health_fix_rearm">Re-arm</string>
+    <string name="health_bg_location">Location: Allow all the time</string>
+    <string name="health_bg_location_bad">Without it, geofences never fire in the background.</string>
+    <string name="health_precise">Precise location</string>
+    <string name="health_precise_bad">Approximate location is too coarse to tell if you are at the office.</string>
+    <string name="health_location_on">Location turned on</string>
+    <string name="health_location_on_bad">Location is off for the whole phone.</string>
+    <string name="health_notifications">Notifications</string>
+    <string name="health_notifications_bad">You will not see arrivals or reminders.</string>
+    <string name="health_nearby_wifi">Nearby Wi-Fi devices</string>
+    <string name="health_nearby_wifi_bad">Needed to recognise the office Wi-Fi.</string>
+    <string name="health_battery">Battery: Unrestricted</string>
+    <string name="health_battery_bad">The system may delay or drop background events.</string>
+    <string name="health_geofences">Geofences registered</string>
+    <string name="health_geofences_bad">What is registered does not match what should be. Re-arm to fix.</string>
+    <string name="health_wifi_callback">Wi-Fi listener</string>
+    <string name="health_wifi_callback_bad">The Wi-Fi listener is not in the state it should be. Re-arm to fix.</string>
+    <string name="health_details">Details</string>
+    <string name="health_expected">Right now: geofence %1$s, Wi-Fi listener %2$s</string>
+    <string name="health_geofence_off">off</string>
+    <string name="health_geofence_arrival">watching for arrival</string>
+    <string name="health_geofence_presence">watching for exit</string>
+    <string name="health_last_registered">Geofences last registered: %1$s</string>
+    <string name="health_last_event">Last detected event: %1$s, %2$s</string>
+    <string name="health_last_event_none">Last detected event: none yet</string>
+    <string name="health_last_error">Last error: %1$s (%2$s)</string>
+    <string name="health_event_enter">geofence enter</string>
+    <string name="health_event_dwell">geofence dwell</string>
+    <string name="health_event_exit">geofence exit</string>
+    <string name="health_event_wifi">office Wi-Fi connected</string>
+    <string name="health_event_wifi_lost">Wi-Fi lost</string>
+    <string name="health_event_wifi_range">office Wi-Fi in range</string>
+    <string name="health_event_manual">logged by hand</string>
+    <string name="health_event_system">system</string>
+</resources>

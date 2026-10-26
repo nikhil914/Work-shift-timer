@@ -90,4 +90,24 @@ class WakePlannerTest {
         assertThat(moved).isNotEqualTo(a)
         assertThat(GeofenceSignature.of(p.plan(ctx, MON.at(5, 0)), listOf(OFFICE), 120_000)).isEqualTo("OFF")
     }
+
+    @Test
+    fun `a pending exit gets one wake when its debounce ends`() {
+        val wake = planner.next(MON, schedule, settings, listOf(OFFICE), arrived, missedEntryCheckDone = false, now = MON.at(16, 35), pendingExitAt = MON.at(16, 30))
+        assertThat(wake).isEqualTo(Wake(MON.at(16, 40), WakeReason.SETTLE_EXIT))
+    }
+
+    @Test
+    fun `exit reminder only when enabled, arrived and no exit yet`() {
+        val on = settings.copy(exitReminderEnabled = true)
+        // Profile A expected end 17:00 → reminder 19:00, before the 20:00 disarm.
+        assertThat(planner.next(MON, schedule, on, listOf(OFFICE), arrived, false, MON.at(17, 0)))
+            .isEqualTo(Wake(MON.at(19, 0), WakeReason.EXIT_REMINDER))
+        assertThat(planner.next(MON, schedule, settings, listOf(OFFICE), arrived, false, MON.at(17, 0))?.reason)
+            .isEqualTo(WakeReason.DISARM)
+        val left = arrived.copy(exitAt = MON.at(16, 0))
+        assertThat(planner.next(MON, schedule, on, listOf(OFFICE), left, false, MON.at(17, 0))?.reason).isEqualTo(WakeReason.DISARM)
+        assertThat(planner.next(MON, schedule, on, listOf(OFFICE), arrived, false, MON.at(17, 0), exitReminderSent = true)?.reason)
+            .isEqualTo(WakeReason.DISARM)
+    }
 }
