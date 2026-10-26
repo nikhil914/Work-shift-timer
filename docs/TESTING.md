@@ -58,7 +58,7 @@ Use a temporary custom profile covering *now* (see Setup) so the window opens an
 5. Live counter: with an arrival and no exit, *At work for* updates within 30 s while Home is open.
 
 ```bash
-adb shell cmd notification allow_listener com.arrivelog 2>/dev/null; adb shell dumpsys notification | grep -A5 com.arrivelog   # posted notifications
+adb shell dumpsys notification --noredact | grep -A3 "pkg=com.arrivelog"   # posted notifications
 ```
 
 ## Battery
