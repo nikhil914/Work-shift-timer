@@ -6,6 +6,8 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import androidx.room.Room
+import com.arrivelog.background.DetectionActions
+import com.arrivelog.background.DetectionCoordinator
 import com.arrivelog.data.db.ArriveLogDatabase
 import com.arrivelog.data.db.DetectionStateDao
 import com.arrivelog.data.db.RawEventDao
@@ -108,4 +110,10 @@ abstract class RepositoryModule {
     @Binds abstract fun workplaces(impl: RoomWorkplaceRepository): WorkplaceRepository
     @Binds abstract fun settings(impl: DataStoreSettingsRepository): SettingsRepository
     @Binds abstract fun transactions(impl: RoomTransactionRunner): TransactionRunner
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class BackgroundModule {
+    @Binds abstract fun detectionActions(impl: DetectionCoordinator): DetectionActions
 }

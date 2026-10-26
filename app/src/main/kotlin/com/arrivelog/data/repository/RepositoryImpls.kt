@@ -46,6 +46,8 @@ class RoomWorkDayRepository @Inject constructor(
     override fun observeRange(from: LocalDate, to: LocalDate): Flow<List<WorkDay>> =
         dao.observeRange(from, to).map { rows -> rows.map { it.toDomain() } }
 
+    override fun observeEarliestDate(): Flow<LocalDate?> = dao.observeEarliestDate()
+
     override suspend fun get(date: LocalDate): WorkDay? = dao.get(date)?.toDomain()
 
     override suspend fun recordArrival(date: LocalDate, at: Instant, source: SignalSource, workplaceId: Long?, zone: ZoneId): Boolean =
@@ -59,6 +61,8 @@ class RoomWorkDayRepository @Inject constructor(
 
     override suspend fun markStatus(date: LocalDate, status: DayStatus): Boolean =
         dao.markStatus(date, status, clock.instant())
+
+    override suspend fun put(day: WorkDay) = dao.upsert(day.toEntity(clock.instant()))
 
     override suspend fun delete(date: LocalDate) = dao.delete(date)
 }

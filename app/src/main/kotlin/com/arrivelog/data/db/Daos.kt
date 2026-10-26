@@ -24,6 +24,13 @@ abstract class WorkDayDao {
     @Query("SELECT * FROM work_day WHERE date BETWEEN :from AND :to ORDER BY date DESC")
     abstract fun observeRange(from: LocalDate, to: LocalDate): Flow<List<WorkDayEntity>>
 
+    @Query("SELECT MIN(date) FROM work_day")
+    abstract fun observeEarliestDate(): Flow<LocalDate?>
+
+    /** Whole-row write for the edit sheet and Undo; the domain DayEditor has applied the rules. */
+    @Upsert
+    abstract suspend fun upsert(entity: WorkDayEntity)
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     protected abstract suspend fun insertIfAbsent(entity: WorkDayEntity): Long
 

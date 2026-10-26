@@ -8,6 +8,7 @@ import com.arrivelog.domain.model.WifiEvidence
 import com.arrivelog.domain.model.WorkDay
 import com.arrivelog.domain.model.Workplace
 import java.time.DateTimeException
+import java.time.Instant
 import java.time.ZoneId
 
 fun WorkDayEntity.toDomain() = WorkDay(
@@ -24,6 +25,23 @@ fun WorkDayEntity.toDomain() = WorkDay(
     exitEdited = exitEdited,
     originalArrivalAt = originalArrivalAt,
     originalExitAt = originalExitAt,
+)
+
+fun WorkDay.toEntity(updatedAt: Instant) = WorkDayEntity(
+    date = date,
+    status = status,
+    arrivalAt = arrivalAt,
+    arrivalSource = arrivalSource,
+    arrivalWorkplaceId = arrivalWorkplaceId,
+    exitAt = exitAt,
+    exitSource = exitSource,
+    zoneId = zoneId?.id,
+    note = note,
+    arrivalEdited = arrivalEdited,
+    exitEdited = exitEdited,
+    originalArrivalAt = originalArrivalAt,
+    originalExitAt = originalExitAt,
+    updatedAt = updatedAt,
 )
 
 fun RawEventEntity.toDomain() = RawEvent(

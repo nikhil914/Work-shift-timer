@@ -35,6 +35,14 @@ class WakePlannerTest {
     }
 
     @Test
+    fun `a posted missed-entry notification is repeated once an hour later`() {
+        val wake = planner.next(MON, schedule, settings, listOf(OFFICE), null, missedEntryCheckDone = true, now = MON.at(11, 10), renotifyPending = true)
+        assertThat(wake).isEqualTo(Wake(MON.at(12, 10), WakeReason.MISSED_ENTRY_RENOTIFY))
+        val afterArrival = planner.next(MON, schedule, settings, listOf(OFFICE), arrived, missedEntryCheckDone = true, now = MON.at(11, 30), renotifyPending = true)
+        assertThat(afterArrival?.reason).isNotEqualTo(WakeReason.MISSED_ENTRY_RENOTIFY)
+    }
+
+    @Test
     fun `after arrival with exit tracking the next wake is disarm`() {
         assertThat(next(MON.at(8, 1), day = arrived)).isEqualTo(Wake(MON.at(20, 0), WakeReason.DISARM))
     }

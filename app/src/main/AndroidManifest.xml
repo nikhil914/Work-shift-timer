@@ -52,6 +52,8 @@
         <receiver android:name=".background.GeofenceReceiver" android:exported="false" />
         <receiver android:name=".background.WifiReceiver" android:exported="false" />
         <receiver android:name=".background.WakeReceiver" android:exported="false" />
+        <!-- Undo / Log now buttons on the notifications (Phase 4). -->
+        <receiver android:name=".notifications.NotificationActionReceiver" android:exported="false" />
         <receiver android:name=".background.SystemEventsReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -84,9 +86,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- singleTop: a notification tap while the app is open reuses it (onNewIntent). -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

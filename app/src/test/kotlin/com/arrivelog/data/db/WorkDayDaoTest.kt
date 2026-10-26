@@ -138,4 +138,25 @@ class WorkDayDaoTest {
             date.plusDays(5), date.plusDays(4), date.plusDays(3), date.plusDays(2),
         ).inOrder()
     }
+
+    @Test
+    fun editedRow_isWrittenAsIs_andBlocksLaterAutoArrivals() = runBlocking {
+        dao.recordArrival(date, t("04:07"), SignalSource.WIFI, 1, "Asia/Dubai", now)
+        val edited = requireNotNull(dao.get(date)).copy(arrivalAt = t("04:00"), arrivalEdited = true, note = "badge reader")
+        dao.upsert(edited)
+        // An earlier auto signal may not move an edited arrival.
+        assertThat(dao.recordArrival(date, t("03:55"), SignalSource.GEOFENCE, 1, "Asia/Dubai", now)).isFalse()
+        val row = requireNotNull(dao.get(date))
+        assertThat(row.arrivalAt).isEqualTo(t("04:00"))
+        assertThat(row.originalArrivalAt).isEqualTo(t("04:07"))
+        assertThat(row.note).isEqualTo("badge reader")
+    }
+
+    @Test
+    fun earliestDate_followsTheOldestRow() = runBlocking {
+        assertThat(dao.observeEarliestDate().first()).isNull()
+        dao.markStatus(date, DayStatus.WFH, now)
+        dao.markStatus(date.minusDays(3), DayStatus.LEAVE, now)
+        assertThat(dao.observeEarliestDate().first()).isEqualTo(date.minusDays(3))
+    }
 }

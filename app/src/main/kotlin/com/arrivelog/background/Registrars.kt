@@ -82,9 +82,10 @@ class GeofenceRegistrar @Inject constructor(
         }
         val request = GeofencingRequest.Builder()
             // ARRIVAL: if already inside when armed, report it (arrival logged at arm time, flagged).
-            // PRESENCE: re-registering while inside must not look like a new arrival.
+            // PRESENCE, and ARRIVAL after Undo: re-registering while inside must not look like a
+            // new arrival (the planner turns initialTrigger off for both).
             .setInitialTrigger(
-                if (plan.geofence == GeofenceArming.ARRIVAL) GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_DWELL else 0,
+                if (plan.initialTrigger) GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_DWELL else 0,
             )
             .addGeofences(fences)
             .build()

@@ -15,6 +15,9 @@ import java.time.ZoneId
 interface WorkDayRepository {
     fun observe(date: LocalDate): Flow<WorkDay?>
     fun observeRange(from: LocalDate, to: LocalDate): Flow<List<WorkDay>>
+
+    /** First day the app ever recorded anything for; the day log starts there. */
+    fun observeEarliestDate(): Flow<LocalDate?>
     suspend fun get(date: LocalDate): WorkDay?
 
     /**
@@ -31,6 +34,12 @@ interface WorkDayRepository {
 
     /** Sets DAY_OFF / WFH / LEAVE for a day without an arrival. Returns true if changed. */
     suspend fun markStatus(date: LocalDate, status: DayStatus): Boolean
+
+    /**
+     * Writes the row exactly as given: edit sheet and Undo. The rules are applied before this by
+     * [com.arrivelog.domain.usecase.DayEditor], so this is the one write that bypasses the SQL guards.
+     */
+    suspend fun put(day: WorkDay)
 
     suspend fun delete(date: LocalDate)
 }

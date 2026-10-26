@@ -18,7 +18,7 @@ import com.arrivelog.ui.nav.SetupStep
 
 /** Every wizard step, reopenable on its own (spec: "also editable later in Settings"). */
 @Composable
-fun SettingsScreen(onOpen: (SetupStep) -> Unit, onDebug: () -> Unit, onBack: () -> Unit) {
+fun SettingsScreen(onOpen: (SetupStep) -> Unit, onDebug: () -> Unit, onSimulator: () -> Unit, onBack: () -> Unit) {
     StepScaffold(
         title = stringResource(R.string.settings_title),
         step = null,
@@ -42,6 +42,13 @@ fun SettingsScreen(onOpen: (SetupStep) -> Unit, onDebug: () -> Unit, onBack: () 
             Column(Modifier.fillMaxWidth().clickable(onClick = onDebug).padding(vertical = 12.dp)) {
                 Text(stringResource(R.string.debug_title), style = MaterialTheme.typography.bodyLarge)
                 Text(stringResource(R.string.debug_sub), style = MaterialTheme.typography.bodySmall)
+            }
+            HorizontalDivider()
+        }
+        item {
+            Column(Modifier.fillMaxWidth().clickable(onClick = onSimulator).padding(vertical = 12.dp)) {
+                Text(stringResource(R.string.simulator_title), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.simulator_sub), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
