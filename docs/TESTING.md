@@ -47,6 +47,20 @@ adb shell dumpsys deviceidle force-idle
 adb shell dumpsys deviceidle unforce
 ```
 
+## Notifications and Home (Phase 4)
+
+Use a temporary custom profile covering *now* (see Setup) so the window opens and closes while you watch.
+
+1. Arrival: trigger Wi-Fi (`adb shell svc wifi disable` / `enable` at the office) → *Arrived HH:mm — logged*. Tap **Edit time**: the sheet opens on the arrival picker. Change it; Home shows ✎ and the sheet shows *Detected … edited by you*.
+2. Undo: on a fresh arrival notification tap **Undo**. Home goes back to *Not yet*; the Debug log shows `UNDO_ARRIVAL` and `GEOFENCE_ARMED:ARRIVAL` but **no** immediate new `ARRIVAL_RECORDED`. Reconnecting Wi-Fi afterwards logs a new arrival.
+3. Missed entry: stay away (or switch Wi-Fi off) until window end + 10 min → *No arrival detected today*. Try each action: **Log now** logs the current time; **Pick time** opens the picker; **Day off / WFH / Leave** opens the sheet on the status chips. Ignore it once and it repeats ~60 min later (`MISSED_ENTRY_RENOTIFY`).
+4. Never blank: leave a working day unresolved; the next day Home shows it as *Needs a time or status* and the banner counts it.
+5. Live counter: with an arrival and no exit, *At work for* updates within 30 s while Home is open.
+
+```bash
+adb shell cmd notification allow_listener com.arrivelog 2>/dev/null; adb shell dumpsys notification | grep -A5 com.arrivelog   # posted notifications
+```
+
 ## Battery
 
 ```bash
