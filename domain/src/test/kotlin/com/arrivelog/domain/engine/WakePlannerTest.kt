@@ -24,14 +24,21 @@ class WakePlannerTest {
     private val settings = DetectionSettings()
     private val arrived = WorkDay(MON, arrivalAt = MON.at(8, 0), arrivalSource = SignalSource.WIFI)
 
-    private fun next(now: java.time.Instant, day: WorkDay? = null, missedDone: Boolean = false, date: java.time.LocalDate = MON, s: DetectionSettings = settings) =
-        planner.next(date, schedule, s, listOf(OFFICE), day, missedDone, now)
+    private fun next(
+        now: java.time.Instant,
+        day: WorkDay? = null,
+        missedDone: Boolean = false,
+        date: java.time.LocalDate = MON,
+        s: DetectionSettings = settings,
+        renotified: Boolean = missedDone,
+    ) = planner.next(date, schedule, s, listOf(OFFICE), day, missedDone, now, renotified)
 
     @Test
     fun `working day sequence - arm, missed-entry check, then tomorrow`() {
         assertThat(next(MON.at(5, 0))).isEqualTo(Wake(MON.at(6, 15), WakeReason.ARM))
         assertThat(next(MON.at(6, 15))).isEqualTo(Wake(MON.at(11, 10), WakeReason.MISSED_ENTRY_CHECK))
-        assertThat(next(MON.at(11, 10), missedDone = true)).isEqualTo(Wake(TUE.at(6, 15), WakeReason.NEXT_WORKING_DAY))
+        assertThat(next(MON.at(11, 10), missedDone = true, renotified = false)).isEqualTo(Wake(MON.at(12, 10), WakeReason.MISSED_ENTRY_RENOTIFY))
+        assertThat(next(MON.at(12, 10), missedDone = true, renotified = true)).isEqualTo(Wake(TUE.at(6, 15), WakeReason.NEXT_WORKING_DAY))
     }
 
     @Test
@@ -55,7 +62,7 @@ class WakePlannerTest {
     @Test
     fun `holiday tomorrow is skipped`() {
         val withHoliday = schedule.copy(daysOff = mapOf(TUE to DayStatus.HOLIDAY))
-        val w = planner.next(MON, withHoliday, settings, listOf(OFFICE), null, true, MON.at(12, 0))
+        val w = planner.next(MON, withHoliday, settings, listOf(OFFICE), null, true, MON.at(12, 30), missedEntryRenotified = true)
         assertThat(w).isEqualTo(Wake(TUE.plusDays(1).at(6, 15), WakeReason.NEXT_WORKING_DAY))
     }
 

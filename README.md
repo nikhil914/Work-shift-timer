@@ -1,7 +1,7 @@
 # ArriveLog
 
 Automatic workplace arrival logging (geofence + Wi-Fi), restricted to the working schedule.
-Built in phases. Done: **Phase 1** (data layer, decision engine, tests), **Phase 2** (setup wizard, permissions) and **Phase 3** (background detection).
+Built in phases. Done: **Phase 1** (data layer, decision engine, tests), **Phase 2** (setup wizard, permissions), **Phase 3** (background detection) and **Phase 4** (home, day log, edits, notifications).
 Distribution: **Google Play**.
 
 ## Decisions (26 Oct 2026)
@@ -94,6 +94,14 @@ Nothing runs in the background yet; that is Phase 3.
 Device testing (mock locations, `adb` Wi-Fi toggles, Doze, reboot, battery stats): [`docs/TESTING.md`](docs/TESTING.md).
 
 Known limitation: Android doesn't deliver "Location turned back on" to a stopped app, so after Location is switched off and on, fences return at the next wake, app open, or watchdog.
+
+## Phase 4: home, day log, edits, notifications
+
+- **Home**: today's arrival in large type, status chip (On time / Late by N min / Not yet / Missing / Day off / WFH / Leave / Holiday / Weekend), detection source, live time-at-work (a one-minute ticker that only runs while the screen is visible), exit time or "leaving…" while an exit is debouncing, edited badge.
+- **Day log**: last 12 weeks, newest first, Monday-start weeks with sticky headers and weekly totals; non-working days greyed; past working days with neither an arrival nor a status are listed in a "needs attention" banner (the "never blank" rule).
+- **Edit sheet** (tap the card or any row): arrival, exit, status, note; validation (exit after arrival, no times on non-working days); the originally detected times stay visible as the audit trail. Clearing an auto arrival also makes the engine forget the evidence behind it.
+- **Notifications**: *Arrived 08:07 — logged* (Edit time, Undo; updated in place if a late signal moves it earlier) and the high-priority *No arrival detected today* (Log now or *Log 06:20* when presence was seen, Pick time, Day off / WFH / Leave). Re-sent once 60 minutes later if unresolved, cancelled as soon as an arrival or a status exists. Android allows three actions, so Day off / WFH / Leave opens a chooser in the app.
+- The Phase 1 signal simulator moved to Settings → Developer tools.
 
 ### Google Maps API key
 

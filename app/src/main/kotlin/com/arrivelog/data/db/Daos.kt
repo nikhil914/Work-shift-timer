@@ -100,6 +100,10 @@ abstract class WorkDayDao {
     @Query("DELETE FROM work_day WHERE date = :date")
     abstract suspend fun delete(date: LocalDate)
 
+    /** Manual edits / undo write the whole row (the engine paths above use guarded SQL instead). */
+    @Upsert
+    abstract suspend fun upsert(entity: WorkDayEntity)
+
     private fun blank(date: LocalDate, now: Instant) = WorkDayEntity(
         date = date,
         status = DayStatus.WORKING,

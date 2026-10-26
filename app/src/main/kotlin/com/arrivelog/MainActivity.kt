@@ -23,7 +23,12 @@ import androidx.navigation.toRoute
 import com.arrivelog.domain.repository.SettingsRepository
 import com.arrivelog.ui.debug.DebugLogScreen
 import com.arrivelog.ui.nav.DebugLogRoute
+import com.arrivelog.ui.nav.DevToolsRoute
 import com.arrivelog.ui.nav.HomeRoute
+import com.arrivelog.ui.home.EditRequest
+import com.arrivelog.ui.home.HomeScreen
+import com.arrivelog.notify.EditFocus
+import com.arrivelog.notify.Notifier
 import com.arrivelog.ui.nav.ModeRoute
 import com.arrivelog.ui.nav.PermissionsRoute
 import com.arrivelog.ui.nav.ProfileEditRoute
@@ -74,13 +79,24 @@ class MainActivity : ComponentActivity() {
         appScope.launch { coordinator.sync("APP_OPEN") }
     }
 
+    /** Notification taps: "Edit time", "Pick time", "Not working". */
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingEdit.value = intent.toEditRequest()
+    }
+
+    private val pendingEdit = kotlinx.coroutines.flow.MutableStateFlow<EditRequest?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (savedInstanceState == null) pendingEdit.value = intent.toEditRequest()
         setContent {
             ArriveLogTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    AppNavHost()
+                    val request by pendingEdit.collectAsStateWithLifecycle()
+                    AppNavHost(editRequest = request, onEditRequestHandled = { pendingEdit.value = null })
                 }
             }
         }
@@ -94,8 +110,18 @@ class MainViewModel @Inject constructor(settings: SettingsRepository) : ViewMode
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 }
 
+private fun android.content.Intent?.toEditRequest(): EditRequest? {
+    val date = this?.getStringExtra(Notifier.EXTRA_EDIT_DATE)?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() } ?: return null
+    val focus = getStringExtra(Notifier.EXTRA_EDIT_FOCUS)?.let { runCatching { EditFocus.valueOf(it) }.getOrNull() } ?: EditFocus.TIME
+    return EditRequest(date, focus)
+}
+
 @Composable
-private fun AppNavHost(main: MainViewModel = hiltViewModel()) {
+private fun AppNavHost(
+    editRequest: EditRequest?,
+    onEditRequestHandled: () -> Unit,
+    main: MainViewModel = hiltViewModel(),
+) {
     val setupCompleted by main.setupCompleted.collectAsStateWithLifecycle()
     val done = setupCompleted ?: run {
         Box(Modifier.fillMaxSize())
@@ -105,11 +131,19 @@ private fun AppNavHost(main: MainViewModel = hiltViewModel()) {
     val start: Any = if (done) HomeRoute else WorkplacesRoute(wizard = true)
 
     NavHost(navController = nav, startDestination = start) {
-        composable<HomeRoute> { ShellScreen(onSettings = { nav.navigate(SettingsRoute) }) }
+        composable<HomeRoute> {
+            HomeScreen(
+                onSettings = { nav.navigate(SettingsRoute) },
+                editRequest = editRequest,
+                onEditRequestHandled = onEditRequestHandled,
+            )
+        }
+        composable<DevToolsRoute> { ShellScreen(onBack = { nav.popBackStack() }) }
         composable<SettingsRoute> {
             SettingsScreen(
                 onOpen = { nav.navigate(it.route(wizard = false)) },
                 onDebug = { nav.navigate(DebugLogRoute) },
+                onDevTools = { nav.navigate(DevToolsRoute) },
                 onBack = { nav.popBackStack() },
             )
         }

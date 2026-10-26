@@ -172,6 +172,10 @@ class ProcessSignalUseCaseTest {
         override suspend fun delete(date: LocalDate) {
             rows.remove(date)
         }
+
+        override suspend fun save(day: WorkDay) {
+            rows[day.date] = day
+        }
     }
 
     private class FakeStates : DetectionStateRepository {

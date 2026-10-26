@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home -->
+    <string name="home_left_at">Left %1$s</string>
+    <string name="home_leaving">Left at %1$s? Confirming (10 min)…</string>
+    <string name="home_at_work_live">At work %1$s</string>
+    <string name="home_worked">Worked %1$s</string>
+    <string name="home_edited">edited</string>
+    <string name="home_week_of">Week of %1$s</string>
+    <plurals name="home_attention_title_plural">
+        <item quantity="one">%1$d day needs attention</item>
+        <item quantity="other">%1$d days need attention</item>
+    </plurals>
+    <string name="home_attention_body">Starting %1$s. Tap to add the time or mark the day.</string>
+    <string name="duration_hm">%1$dh %2$02dm</string>
+
+    <!-- Chips -->
+    <string name="chip_on_time">On time</string>
+    <string name="chip_late">Late by %1$d min</string>
+    <string name="chip_arrived">Arrived</string>
+    <string name="chip_not_yet">Not yet</string>
+    <string name="chip_missing">No arrival logged</string>
+
+    <!-- Sources -->
+    <string name="source_long_geofence">via location</string>
+    <string name="source_long_wifi">via Wi-Fi</string>
+    <string name="source_long_manual">manual</string>
+    <string name="source_short_geofence">GPS</string>
+    <string name="source_short_wifi">Wi-Fi</string>
+    <string name="source_short_manual">Manual</string>
+
+    <!-- Edit sheet -->
+    <string name="edit_status">Day</string>
+    <string name="edit_status_hint">Choose Day off, WFH, Leave or Holiday if you weren’t at work.</string>
+    <string name="edit_arrival">Arrival</string>
+    <string name="edit_exit">Exit</string>
+    <string name="edit_set">Set</string>
+    <string name="edit_clear">Clear</string>
+    <string name="edit_note">Note</string>
+    <string name="edit_audit_arrival">Detected automatically: arrival %1$s</string>
+    <string name="edit_audit_exit">Detected automatically: exit %1$s</string>
+    <string name="edit_err_exit_without_arrival">Set an arrival before an exit.</string>
+    <string name="edit_err_exit_before">Exit must be after arrival.</string>
+    <string name="edit_err_times_non_working">A day off can’t have arrival or exit times.</string>
+
+    <!-- Notifications -->
+    <string name="channel_arrivals">Arrivals</string>
+    <string name="channel_arrivals_desc">Confirms when your arrival was logged.</string>
+    <string name="channel_reminders">Missed arrival reminders</string>
+    <string name="channel_reminders_desc">Asks you to log the day when no arrival was detected.</string>
+    <string name="notif_arrival_title">Arrived %1$s — logged</string>
+    <string name="notif_arrival_body_wifi">Detected via office Wi-Fi.</string>
+    <string name="notif_arrival_body_geofence">Detected via location.</string>
+    <string name="notif_arrival_body_manual">Logged manually.</string>
+    <string name="notif_arrival_body_estimated">You were already at work when detection started, so you may have arrived earlier. Edit if needed.</string>
+    <string name="notif_action_edit_time">Edit time</string>
+    <string name="notif_action_undo">Undo</string>
+    <string name="notif_missed_title">No arrival detected today</string>
+    <string name="notif_missed_title_again">Still no arrival logged today</string>
+    <string name="notif_missed_body">Log your arrival, or mark today as day off, WFH or leave.</string>
+    <string name="notif_missed_body_suggest">You were detected at work from %1$s, before detection opened. Log it, pick another time, or mark the day.</string>
+    <string name="notif_action_log_now">Log now</string>
+    <string name="notif_action_log_at">Log %1$s</string>
+    <string name="notif_action_pick_time">Pick time</string>
+    <string name="notif_action_not_working">Day off / WFH / Leave</string>
+
+    <!-- Developer tools -->
+    <string name="devtools_title">Developer tools</string>
+    <string name="devtools_sub">Simulate signals through the detection engine</string>
+</resources>

@@ -178,3 +178,63 @@ fun Signal.toRawEvent(decision: Decision): RawEvent {
         reason = decision.reasonText,
     )
 }
+
+sealed interface EditResult {
+    data object Saved : EditResult
+    data class Invalid(val problems: Set<com.arrivelog.domain.day.EditProblem>) : EditResult
+}
+
+/** Manual edit from the edit sheet, with audit trail; clearing the arrival behaves like Undo. */
+class EditDayUseCase @Inject constructor(
+    private val engine: ArrivalDecisionEngine,
+    private val workDays: WorkDayRepository,
+    private val states: DetectionStateRepository,
+    private val eventLog: EventLogRepository,
+    private val tx: TransactionRunner,
+) {
+    suspend operator fun invoke(date: LocalDate, edit: com.arrivelog.domain.day.DayEdit): EditResult {
+        val problems = com.arrivelog.domain.day.DayEditor.validate(edit)
+        if (problems.isNotEmpty()) return EditResult.Invalid(problems)
+        return tx.inTransaction {
+            val current = workDays.get(date) ?: WorkDay(date)
+            val updated = com.arrivelog.domain.day.DayEditor.apply(current, edit, engine.zone)
+            workDays.save(updated)
+            if (current.arrivalAt != null && updated.arrivalAt == null) forgetEvidence(date)
+            val now = engine.now()
+            eventLog.append(
+                RawEvent(
+                    at = now, receivedAt = now, type = RawEventType.MANUAL, accepted = true,
+                    reason = "EDIT:arrival=${updated.arrivalAt},exit=${updated.exitAt},status=${updated.status}",
+                ),
+            )
+            EditResult.Saved
+        }
+    }
+
+    private suspend fun forgetEvidence(date: LocalDate) {
+        states.put(DetectionState(date, ignoreEvidenceBefore = engine.now()))
+    }
+}
+
+/**
+ * "Undo" on the arrival notification: the arrival was wrong (e.g. drive-by). Clears it and makes
+ * the engine ignore evidence from before now, so the same signals cannot re-log it; a genuine
+ * later arrival still can.
+ */
+class UndoArrivalUseCase @Inject constructor(
+    private val engine: ArrivalDecisionEngine,
+    private val workDays: WorkDayRepository,
+    private val states: DetectionStateRepository,
+    private val eventLog: EventLogRepository,
+    private val tx: TransactionRunner,
+) {
+    suspend operator fun invoke(date: LocalDate): Boolean = tx.inTransaction {
+        val current = workDays.get(date)
+        if (current?.arrivalAt == null) return@inTransaction false
+        workDays.save(com.arrivelog.domain.day.DayEditor.undoArrival(current))
+        val now = engine.now()
+        states.put(DetectionState(date, ignoreEvidenceBefore = now))
+        eventLog.append(RawEvent(at = now, receivedAt = now, type = RawEventType.MANUAL, accepted = true, reason = "UNDO_ARRIVAL:${current.arrivalAt}"))
+        true
+    }
+}

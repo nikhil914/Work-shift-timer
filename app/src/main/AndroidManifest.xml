@@ -52,6 +52,7 @@
         <receiver android:name=".background.GeofenceReceiver" android:exported="false" />
         <receiver android:name=".background.WifiReceiver" android:exported="false" />
         <receiver android:name=".background.WakeReceiver" android:exported="false" />
+        <receiver android:name=".notify.NotificationActionReceiver" android:exported="false" />
         <receiver android:name=".background.SystemEventsReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -86,7 +87,8 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

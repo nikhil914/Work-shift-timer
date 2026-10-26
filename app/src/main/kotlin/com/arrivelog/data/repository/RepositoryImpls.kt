@@ -61,6 +61,8 @@ class RoomWorkDayRepository @Inject constructor(
         dao.markStatus(date, status, clock.instant())
 
     override suspend fun delete(date: LocalDate) = dao.delete(date)
+
+    override suspend fun save(day: WorkDay) = dao.upsert(day.toEntity(clock.instant()))
 }
 
 @Singleton
