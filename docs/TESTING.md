@@ -47,7 +47,24 @@ adb shell dumpsys deviceidle force-idle
 adb shell dumpsys deviceidle unforce
 ```
 
+## Exit reminder, Stats, Health (Phase 5)
+
+1. Detection mode → turn on **Remind me to add the exit time**. Use a temporary profile whose expected end is about 2 h before now, with an arrival logged today and no exit. Open the app (or wait for the wake): *Still at work?* appears once. **Left now** logs the exit (source manual) and the notification goes away; it does not come back the same day.
+2. **Undo** on an arrival while still at the office: the arrival disappears and is *not* logged again within a minute. Debug log shows `GEOFENCE_ARMED:ARRIVAL` with no new `GEOFENCE_DWELL ✓ ARRIVAL_RECORDED`.
+3. **Stats**: switch Week / Month and step back. Numbers should match the Home day log (late days, hours of days with an exit). Edit a day and come back: the stats update.
+4. **Health**: turn Location off → "Location turned on" goes red with Fix; turn it back on and return → green. Set battery to Optimised → red; Fix opens the battery list. **Re-arm now** writes `WAKE:HEALTH:FORCE` to the Debug log.
+
+## Export, widget, tile, backup (Phase 6)
+
+1. **Export**: Settings → Export & backup → *This month* → XLSX → share to Drive or email; open it in Excel / Sheets: one row per day, hours as numbers. Repeat with CSV.
+2. **Widget**: long-press the home screen → Widgets → ArriveLog → *Today's arrival*. It shows today's arrival; edit today's time in the app and the widget follows within a few seconds.
+3. **Tile**: pull down Quick Settings → edit (pencil) → drag *Log arrival* in. On a day with no arrival, tap it: the arrival notification appears and the tile shows "Arrived HH:mm". Tapping again changes nothing.
+4. **Backup**: *Save backup* to Downloads. Edit a day, then *Restore* that file: the confirm dialog shows the counts, and the day is back to its saved value. A random JSON file gives "not an ArriveLog backup" and changes nothing.
+5. **Battery numbers**: Debug log → *Registered today* should roughly match the time between `GEOFENCE_ARMED` and `GEOFENCE_REMOVED` lines.
+
 ## Battery
+
+Full audit and the one-week measurement: [`BATTERY.md`](BATTERY.md).
 
 ```bash
 adb shell dumpsys batterystats --reset

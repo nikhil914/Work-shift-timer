@@ -99,6 +99,25 @@ class Notifier @Inject constructor(
         post(ID_MISSED, notification)
     }
 
+    /** "Still at work? Add exit time" (optional, off by default): Left now / Pick time. */
+    fun showExitReminder(date: LocalDate) {
+        val body = context.getString(R.string.notif_exit_body)
+        val notification = NotificationCompat.Builder(context, CHANNEL_REMINDERS)
+            .setSmallIcon(R.drawable.ic_stat_arrival)
+            .setContentTitle(context.getString(R.string.notif_exit_title))
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setAutoCancel(true)
+            .setContentIntent(openApp(date, EditFocus.TIME, REQ_EXIT_OPEN))
+            .addAction(0, context.getString(R.string.notif_action_left_now), broadcast(NotificationActionReceiver.ACTION_LEFT, date, null, REQ_EXIT_LEFT))
+            .addAction(0, context.getString(R.string.notif_action_pick_time), openApp(date, EditFocus.TIME, REQ_EXIT_PICK))
+            .build()
+        post(ID_EXIT, notification)
+    }
+
+    fun cancelExitReminder() = manager.cancel(ID_EXIT)
+
     fun cancelMissed() = manager.cancel(ID_MISSED)
 
     fun cancelArrival() = manager.cancel(ID_ARRIVAL)
@@ -139,6 +158,7 @@ class Notifier @Inject constructor(
 
         private const val ID_ARRIVAL = 100
         private const val ID_MISSED = 101
+        private const val ID_EXIT = 102
         private const val REQ_ARRIVAL_OPEN = 200
         private const val REQ_ARRIVAL_EDIT = 201
         private const val REQ_ARRIVAL_UNDO = 202
@@ -146,6 +166,9 @@ class Notifier @Inject constructor(
         private const val REQ_MISSED_LOG = 211
         private const val REQ_MISSED_PICK = 212
         private const val REQ_MISSED_STATUS = 213
+        private const val REQ_EXIT_OPEN = 220
+        private const val REQ_EXIT_LEFT = 221
+        private const val REQ_EXIT_PICK = 222
         private const val ARRIVAL_TIMEOUT_MS = 12 * 60 * 60 * 1000L
 
         private val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")

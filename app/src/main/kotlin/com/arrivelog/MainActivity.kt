@@ -24,7 +24,13 @@ import com.arrivelog.domain.repository.SettingsRepository
 import com.arrivelog.ui.debug.DebugLogScreen
 import com.arrivelog.ui.nav.DebugLogRoute
 import com.arrivelog.ui.nav.DevToolsRoute
+import com.arrivelog.ui.nav.ExportRoute
+import com.arrivelog.ui.nav.HealthRoute
+import com.arrivelog.ui.export.ExportScreen
 import com.arrivelog.ui.nav.HomeRoute
+import com.arrivelog.ui.nav.StatsRoute
+import com.arrivelog.ui.health.HealthScreen
+import com.arrivelog.ui.stats.StatsScreen
 import com.arrivelog.ui.home.EditRequest
 import com.arrivelog.ui.home.HomeScreen
 import com.arrivelog.notify.EditFocus
@@ -134,14 +140,26 @@ private fun AppNavHost(
         composable<HomeRoute> {
             HomeScreen(
                 onSettings = { nav.navigate(SettingsRoute) },
+                onStats = { nav.navigate(StatsRoute) },
+                onHealth = { nav.navigate(HealthRoute) },
                 editRequest = editRequest,
                 onEditRequestHandled = onEditRequestHandled,
             )
         }
         composable<DevToolsRoute> { ShellScreen(onBack = { nav.popBackStack() }) }
+        composable<ExportRoute> { ExportScreen(onBack = { nav.popBackStack() }) }
+        composable<StatsRoute> { StatsScreen(onBack = { nav.popBackStack() }) }
+        composable<HealthRoute> {
+            HealthScreen(
+                onPermissions = { nav.navigate(PermissionsRoute(wizard = false)) },
+                onBack = { nav.popBackStack() },
+            )
+        }
         composable<SettingsRoute> {
             SettingsScreen(
                 onOpen = { nav.navigate(it.route(wizard = false)) },
+                onHealth = { nav.navigate(HealthRoute) },
+                onExport = { nav.navigate(ExportRoute) },
                 onDebug = { nav.navigate(DebugLogRoute) },
                 onDevTools = { nav.navigate(DevToolsRoute) },
                 onBack = { nav.popBackStack() },

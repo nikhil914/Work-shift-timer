@@ -106,6 +106,27 @@ class ProcessSignalUseCaseTest {
         assertThat(result.plan).isNull()
     }
 
+    @Test
+    fun `left now fills an empty exit once and blocks later auto exits`() = runTest {
+        process(Signal.WifiConnected(officeWifi, at = MON.at(8, 7)))
+        val logExit = LogExitUseCase(engine, days, log, tx)
+        clock.now = MON.at(19, 0)
+        assertThat(logExit(MON)).isTrue()
+        assertThat(days.rows[MON]?.exitAt).isEqualTo(MON.at(19, 0))
+        assertThat(days.rows[MON]?.exitSource).isEqualTo(SignalSource.MANUAL)
+        // Second tap (or a stale notification) does nothing.
+        assertThat(logExit(MON, MON.at(19, 30))).isFalse()
+        assertThat(days.rows[MON]?.exitAt).isEqualTo(MON.at(19, 0))
+    }
+
+    @Test
+    fun `left now needs an arrival before it`() = runTest {
+        val logExit = LogExitUseCase(engine, days, log, tx)
+        assertThat(logExit(MON, MON.at(19, 0))).isFalse()
+        process(Signal.WifiConnected(officeWifi, at = MON.at(8, 7)))
+        assertThat(logExit(MON, MON.at(8, 0))).isFalse()
+    }
+
     // Fakes ------------------------------------------------------------------------------------
 
     private class MutexTx : TransactionRunner {

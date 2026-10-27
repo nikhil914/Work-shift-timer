@@ -92,4 +92,16 @@ class ListenerPlannerTest {
         h.workplaces = emptyList()
         assertThat(h.plan(MON, MON.at(8, 0)).reason).isEqualTo(PlanReason.NO_WORKPLACES)
     }
+
+    @Test
+    fun `arrival fences report already-inside, except after Undo`() {
+        assertThat(h.plan(MON, MON.at(6, 15)).initialTrigger).isTrue()
+        h.states[MON] = com.arrivelog.domain.model.DetectionState(MON, ignoreEvidenceBefore = MON.at(8, 30))
+        val afterUndo = h.plan(MON, MON.at(8, 31))
+        assertThat(afterUndo.geofence).isEqualTo(GeofenceArming.ARRIVAL)
+        assertThat(afterUndo.initialTrigger).isFalse()
+        // The change must re-register the fences.
+        assertThat(GeofenceSignature.of(afterUndo, h.workplaces, 120_000))
+            .isNotEqualTo(GeofenceSignature.of(afterUndo.copy(initialTrigger = true), h.workplaces, 120_000))
+    }
 }

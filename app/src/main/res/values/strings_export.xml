@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Export (Phase 6) -->
+    <string name="export_title">Export &amp; backup</string>
+    <string name="settings_export_sub">Spreadsheet of your days, backup and restore</string>
+    <string name="export_range">Date range</string>
+    <string name="export_this_month">This month</string>
+    <string name="export_last_month">Last month</string>
+    <string name="export_last_3_months">Last 3 months</string>
+    <string name="export_this_year">This year</string>
+    <string name="export_custom">Custom…</string>
+    <string name="export_range_value">%1$s – %2$s</string>
+    <string name="export_format">Format</string>
+    <string name="export_xlsx">Excel (XLSX)</string>
+    <string name="export_csv">CSV</string>
+    <string name="export_hint">One row per day. Opens the share sheet, so you can send it to Samsung Notes, email or Drive.</string>
+    <string name="export_action">Export %1$s</string>
+    <string name="export_failed">The export could not be created. Try again.</string>
+    <string name="export_yes">yes</string>
+    <string name="export_col_date">Date</string>
+    <string name="export_col_weekday">Day</string>
+    <string name="export_col_status">Status</string>
+    <string name="export_col_arrival">Arrival</string>
+    <string name="export_col_exit">Exit</string>
+    <string name="export_col_hours">Hours</string>
+    <string name="export_col_late">Minutes late</string>
+    <string name="export_col_arrival_source">Arrival source</string>
+    <string name="export_col_exit_source">Exit source</string>
+    <string name="export_col_edited">Edited</string>
+    <string name="export_col_note">Note</string>
+    <string name="export_source_geofence">Location</string>
+    <string name="export_source_wifi">Wi-Fi</string>
+    <string name="export_source_manual">Manual</string>
+
+    <!-- Backup -->
+    <string name="backup_title">Backup</string>
+    <string name="backup_body">Saves your days, workplaces, schedule and settings to one JSON file. Restoring brings them back and keeps any days that are not in the file.</string>
+    <string name="backup_save">Save backup</string>
+    <string name="backup_restore">Restore</string>
+    <plurals name="backup_saved">
+        <item quantity="one">Backup saved (%1$d day).</item>
+        <item quantity="other">Backup saved (%1$d days).</item>
+    </plurals>
+    <plurals name="backup_restored">
+        <item quantity="one">Restored %1$d day. Detection has been re-armed.</item>
+        <item quantity="other">Restored %1$d days. Detection has been re-armed.</item>
+    </plurals>
+    <string name="backup_invalid">That file is not an ArriveLog backup, or it is from a newer version of the app.</string>
+    <string name="backup_failed">The file could not be read or written. Nothing was changed.</string>
+    <string name="backup_confirm_title">Restore this backup?</string>
+    <string name="backup_confirm_body">It has %1$d days and %2$d workplaces. Your workplaces, schedule and settings will be replaced, and days in the file will overwrite the same days here.</string>
+
+    <!-- Daily summary on Home -->
+    <string name="summary_arrived">%1$s — Arrived %2$s</string>
+    <string name="summary_arrived_left">%1$s — Arrived %2$s, left %3$s</string>
+    <string name="summary_copy">Copy</string>
+    <string name="summary_share">Share</string>
+
+    <!-- Widget -->
+    <string name="widget_name">Today\'s arrival</string>
+    <string name="widget_description">Today\'s arrival time and status</string>
+    <string name="widget_left">Left %1$s</string>
+
+    <!-- Quick Settings tile -->
+    <string name="tile_label">Log arrival</string>
+    <string name="tile_arrived">Arrived %1$s</string>
+    <string name="tile_tap_to_log">Tap to log now</string>
+
+    <!-- Battery audit (Debug log) -->
+    <string name="debug_uptime">Registered today: geofences %1$s, Wi-Fi callback %2$s</string>
+    <string name="debug_active_now">Listeners active now: %1$d</string>
+
+    <!-- Samsung (Health) -->
+    <string name="health_samsung_title">Samsung: Sleeping apps</string>
+    <string name="health_samsung_body">One UI can put apps to sleep even when battery is Unrestricted. In Settings → Device care → Battery → Background usage limits, make sure ArriveLog is not in Sleeping apps or Deep sleeping apps (add it to Never sleeping apps).</string>
+    <string name="health_samsung_open">Open app settings</string>
+</resources>

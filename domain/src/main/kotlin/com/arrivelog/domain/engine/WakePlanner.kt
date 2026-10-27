@@ -14,13 +14,15 @@ import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 
-enum class WakeReason { ARM, MISSED_ENTRY_CHECK, MISSED_ENTRY_RENOTIFY, DISARM, NEXT_WORKING_DAY }
+enum class WakeReason { ARM, MISSED_ENTRY_CHECK, MISSED_ENTRY_RENOTIFY, SETTLE_EXIT, EXIT_REMINDER, DISARM, NEXT_WORKING_DAY }
 
 data class Wake(val at: Instant, val reason: WakeReason)
 
 /**
  * The single next moment the app must wake up by itself. At most three per working day (arm,
  * missed-entry check, disarm); none on days that are off. Everything else is event-driven.
+ * Extras, each only when it applies: the missed-entry re-notify, committing a pending exit once its
+ * debounce has passed (so the exit shows without opening the app), and the opt-in exit reminder.
  */
 class WakePlanner @Inject constructor(
     private val clock: Clock,
@@ -35,10 +37,13 @@ class WakePlanner @Inject constructor(
         missedEntryCheckDone: Boolean,
         now: Instant = clock.instant(),
         missedEntryRenotified: Boolean = false,
+        /** A geofence EXIT waiting out its debounce (DetectionState.pendingExit). */
+        pendingExitAt: Instant? = null,
+        exitReminderSent: Boolean = false,
     ): Wake? {
         if (workplaces.isEmpty()) return null
         timeline(today, schedule)?.let { t ->
-            todayCandidates(t, settings, todayRecord, missedEntryCheckDone, missedEntryRenotified).filter { it.at.isAfter(now) }.minByOrNull { it.at }?.let { return it }
+            todayCandidates(t, settings, todayRecord, missedEntryCheckDone, missedEntryRenotified, pendingExitAt, exitReminderSent).filter { it.at.isAfter(now) }.minByOrNull { it.at }?.let { return it }
         }
         // Next working day's arm time (holidays and OFF days skipped). Two weeks covers any leave
         // block entered so far; the daily watchdog re-plans anyway.
@@ -49,7 +54,15 @@ class WakePlanner @Inject constructor(
         return null
     }
 
-    private fun todayCandidates(t: DayTimeline, settings: DetectionSettings, day: WorkDay?, missedDone: Boolean, renotified: Boolean): List<Wake> = buildList {
+    private fun todayCandidates(
+        t: DayTimeline,
+        settings: DetectionSettings,
+        day: WorkDay?,
+        missedDone: Boolean,
+        renotified: Boolean,
+        pendingExitAt: Instant?,
+        exitReminderSent: Boolean,
+    ): List<Wake> = buildList {
         val markedOff = day != null && day.arrivalAt == null && day.status != DayStatus.WORKING
         if (markedOff) return@buildList
         add(Wake(t.armAt, WakeReason.ARM))
@@ -57,6 +70,10 @@ class WakePlanner @Inject constructor(
         // Spec: re-notify once, 60 min after the first reminder, if still unresolved.
         if (day?.arrivalAt == null && missedDone && !renotified) add(Wake(t.missedEntryRenotifyAt, WakeReason.MISSED_ENTRY_RENOTIFY))
         if (day?.arrivalAt != null && settings.exitTrackingEnabled) add(Wake(t.disarmAt, WakeReason.DISARM))
+        if (day?.arrivalAt != null && pendingExitAt != null) add(Wake(pendingExitAt.plus(tuning.exitDebounce), WakeReason.SETTLE_EXIT))
+        if (day?.arrivalAt != null && day.exitAt == null && settings.exitReminderEnabled && !exitReminderSent) {
+            add(Wake(t.exitReminderAt, WakeReason.EXIT_REMINDER))
+        }
     }
 
     private fun timeline(date: LocalDate, schedule: ScheduleSettings): DayTimeline? =
@@ -78,6 +95,7 @@ object GeofenceSignature {
         } else {
             buildString {
                 append(plan.geofence.name).append('|').append(plan.responsivenessMs).append('|').append(loiteringMs)
+                if (plan.initialTrigger) append("|IT")
                 workplaces.sortedBy { it.id }.forEach { w ->
                     append('|').append(w.id).append(':').append(w.latitude).append(',').append(w.longitude).append(',').append(w.radiusMeters)
                 }
