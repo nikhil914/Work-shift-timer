@@ -1,7 +1,7 @@
 # ArriveLog
 
 Automatic workplace arrival logging (geofence + Wi-Fi), restricted to the working schedule.
-Built in phases. Done: **Phase 1** (data layer, decision engine, tests), **Phase 2** (setup wizard, permissions), **Phase 3** (background detection) and **Phase 4** (home, day log, edits, notifications).
+Built in phases. Done: **Phase 1** (data layer, decision engine, tests), **Phase 2** (setup wizard, permissions), **Phase 3** (background detection), **Phase 4** (home, day log, edits, notifications), **Phase 5** (exit reminder, stats, health) and **Phase 6** (export, widget, Quick Settings tile, backup, battery audit).
 Distribution: **Google Play**.
 
 ## Decisions (26 Oct 2026)
@@ -103,6 +103,24 @@ Known limitation: Android doesn't deliver "Location turned back on" to a stopped
 - **Notifications**: *Arrived 08:07 — logged* (Edit time, Undo; updated in place if a late signal moves it earlier) and the high-priority *No arrival detected today* (Log now or *Log 06:20* when presence was seen, Pick time, Day off / WFH / Leave). Re-sent once 60 minutes later if unresolved, cancelled as soon as an arrival or a status exists. Android allows three actions, so Day off / WFH / Leave opens a chooser in the app.
 - The Phase 1 signal simulator moved to Settings → Developer tools.
 
+## Phase 5: exit, stats, health
+
+- **Exit detection** is now woken on time: a pending exit gets its own wake at "left + 10 min" so it is committed even if nothing else happens (before, it waited for the next wake or app open).
+- **Exit reminder** (opt-in, Detection mode → "Remind me to add the exit time"): at expected end + 2 h, if an arrival exists and no exit (and none pending), *Still at work?* with **Left now** (logs the exit as manual) and **Pick time** (opens the edit sheet). Sent at most once a day, cancelled as soon as an exit exists.
+- **Stats** (Home → Stats): week or month, back and forward. On-time %, late days with average minutes late, average / earliest / latest arrival, total hours (only days with an exit), days with nothing logged, average per week, and a month chart of arrival times (red = late) against the expected start. Arrivals on non-working days are charted but not rated or averaged, using the same rules as the Home chips.
+- **Health** (Home → Health, or Settings → Health): green/red list for Allow all the time, precise location, Location on, notifications, nearby Wi-Fi (only when the mode uses Wi-Fi), battery Unrestricted, and whether the registered geofences and Wi-Fi listener match what the planner wants right now. Each red line has a Fix button; **Re-arm now** forces a fresh registration. Also shows the last registration, last detected event and last error.
+- **Fix**: after *Undo* on the arrival notification, re-registering the arrival geofence no longer uses the initial trigger, so being still inside the office does not log the arrival again straight away. Leaving and coming back does.
+
+## Phase 6: export, widget, tile, backup, battery audit
+
+- **Export** (Settings → Export & backup): XLSX or CSV for this month, last month, the last 3 months, this year or a custom range. One row per day (date, day, status, arrival, exit, decimal hours, minutes late, sources, edited, note), sent through the share sheet. XLSX is written by a small built-in writer instead of Apache POI, which would add several MB.
+- **Daily summary**: *Copy* and *Share* on the Home card give "26 Oct 2026 — Arrived 08:07" (plus the exit when there is one), for Samsung Notes or a message.
+- **Widget** (Glance, 2×1): today's date, arrival time, status and exit. Tap opens the app. `updatePeriodMillis = 0`; it is redrawn only when what it shows changes, from inside a sync that is already running. On days with no wake at all (a weekend with nothing scheduled) it keeps the last day's values with that day's date until the next sync.
+- **Quick Settings tile** *Log arrival*: one tap logs a manual arrival now through the engine (first arrival wins). Shows "Arrived 08:07" once there is one.
+- **Backup / restore**: one JSON file with settings, schedule, workplaces and every day (the debug event log is left out). Saved and opened with the system file picker, so Drive and Downloads both work. Restore asks first, replaces settings and workplaces, overwrites matching days and keeps days that are not in the file, then re-arms detection.
+- **Battery audit**: Debug log now also shows hours geofences and the Wi-Fi callback were registered today, and how many listeners are active now. Rule-by-rule check and the one-week measurement procedure: [`docs/BATTERY.md`](docs/BATTERY.md). The measured numbers still need that week on the phone.
+- **Samsung**: Health shows the Sleeping apps / Never sleeping apps step on Samsung phones.
+
 ### Google Maps API key
 
 Create an *Android* key for *Maps SDK for Android* in Google Cloud Console and restrict it to package `com.arrivelog` with these SHA-1 fingerprints:
@@ -163,6 +181,6 @@ The shell drives the real engine and database with simulated signals at a time y
 7. (Mon–Thu) **Reset today**, time `06:20` → Wi-Fi → logged 06:20 (early arrival). **Reset today** again, time `11:30` → Wi-Fi → `AFTER_WINDOW`. After 11:10 real time, **Missed-entry check** → `NOTIFY@11:30` (the detected time is offered as a suggestion).
 8. Rotate / switch dark mode: no crash, dynamic colours follow the wallpaper.
 
-## Later phases (not built yet)
+## Later phases
 
-2 setup wizard + permissions · 3 background detection · 4 home/log/edit/notifications · 5 exit/stats/health · 6 export/widget/QS tile/backup + battery audit.
+All six spec phases are built. Remaining: the one-week battery measurement (docs/BATTERY.md) and the Play release work listed above.
